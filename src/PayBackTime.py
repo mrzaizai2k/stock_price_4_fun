@@ -8,6 +8,7 @@ from vnstock import *
 import math
 from typing import Literal
 from datetime import datetime,timedelta
+from src.utils import *
 
 
 
@@ -18,7 +19,7 @@ class PayBackTime:
                  window_size:int = 10,):
 
         self.window_size = window_size
-        self.symbol = symbol
+        self.symbol = symbol.upper()
         self.report_range = report_range
         self.is_all = is_all
         self.sticker_price, self.MOS_price = None,None
@@ -143,6 +144,9 @@ class PayBackTime:
             price  = self.get_current_price()
         
         growth /= 100
+        if eps <= 0:
+            return None
+        
         cumulative_earnings = 0
         year = 0
         # Loop until the cumulative earnings exceed the price
@@ -150,7 +154,7 @@ class PayBackTime:
             # Increment the year by 1
             year += 1
             # Update the cumulative earnings by adding the EPS times the growth factor
-            cumulative_earnings += eps * (1 + growth) ** year
+            cumulative_earnings += abs(eps) * (1 + growth) ** year
         # Return the year as the payback time
         return year
 
@@ -176,7 +180,7 @@ class PayBackTime:
         report += f"Future PE: {self.get_future_pe():.2f}\n"
         report += f"Future Growth Rate: {self.estimate_mean_interest():.2f}%\n"
         self.check_debt()
-        # report += f'\n {self.create_interest_dataframe()[["Feature","Interest","Status"]]} \n'
+        report += f'\n {self.create_interest_dataframe()} \n'
         if self.sticker_price is None:
             self.sticker_price, self.MOS_price = self.calculate_price()
         report += f"{self.symbol} - Sticker price: {self.sticker_price/1000:.2f} - MOS price: {(self.MOS_price)/1000:.2f}\n"
@@ -186,5 +190,37 @@ class PayBackTime:
         
         # Return the report as a text string
         return report
+
+def pbt_pre_filter():
+    # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
+    paybacktime_params = {
+        "exchangeName": "HOSE",
+        "marketCap": (1_000, 200_000),
+        'revenueGrowth5Year': (15,100),
+        'priceNearRealtime': (15,80),
+        "lastQuarterProfitGrowth": (2, 100),  # Minimum last quarter profit growth
+        # 'pe':(10,20),
+        # "epsGrowth5Year": (10, 100),  # Minimum 1-year EPS growth
+        # "roe": (15, 100),  # Minimum Return on Equity (ROE)
         
 
+        # "avgTradingValue20Day": (100, 2000),  # Minimum 20-day average trading value
+    #     "breakout": 'BULLISH',  # Only buy stocks when the market is in an uptrend
+    }
+    df = filter_stocks(paybacktime_params)      
+    pbt_stocks = df.ticker.to_list()
+    return pbt_stocks
+
+def find_PBT_stocks(report = False):
+    pbt_stocks = pbt_pre_filter()
+    pass_ticker = []
+    for stock in pbt_stocks:
+        pbt_generator = pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
+        # pbt_generator.calculate_price()
+        pbt_years = pbt_generator.calculate_payback_time()
+        if pbt_years is not None and pbt_years <= 5:
+            pass_ticker.append(pbt_generator.symbol)
+            if report: 
+                pbt_generator.get_report()
+    print(f"PBT stocks: {pass_ticker}")
+    return pass_ticker
