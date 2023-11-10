@@ -8,10 +8,11 @@ load_dotenv()
 # from telegram.ext.filters import Filters 
 from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.utils import *
-from src.motif import MotifMatching
+from src.motif import MotifMatching, find_best_motifs
+
 
 TELEBOT_API= os.getenv('TELEBOT_API')
-print('key', TELEBOT_API)
+# print('key', TELEBOT_API)
 bot = telebot.TeleBot(TELEBOT_API)
 
 @bot.message_handler(commands=['start'])
@@ -26,16 +27,23 @@ def help(message):
     bot.send_message(message.chat.id, "\n/findmyfav: find my_param stocks right now")
     bot.send_message(message.chat.id, "\n/risk + symbol: calculate how much stocks u can buy with loss/trade = 6% with max loss/capital = 2%")
     bot.send_message(message.chat.id, "\n/rate + symbol: general rating the stock")
+    bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
+    bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
+    bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
 
 
 @bot.message_handler(commands=['pbt'])
 def get_paybacktime(message):
     # Get the symbol from the user's message
+    symbol = message.text.split()[1].upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+    
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    symbol = message.text.split()[1]
     # Create the PayBackTime object and get the report
     pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
-    report = pbt_generator.get_string_report()
+    report = pbt_generator.get_report()
     
     # Send the report to the user
     bot.send_message(message.chat.id, report)
@@ -52,7 +60,11 @@ def findpbt(message):
 
 @bot.message_handler(commands=['risk'])
 def calculate_risk(message):
-    symbol = message.text.split()[1]
+    symbol = message.text.split()[1].upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+
     pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
     stock_price = pbt_generator.get_current_price()
     num_stocks = calculate_stocks_to_buy(stock_price)
@@ -62,15 +74,30 @@ def calculate_risk(message):
     bot.send_message(message.chat.id, mess)
 
 @bot.message_handler(commands=['rate'])
-def findpbt(message):
-    symbol = message.text.split()[1].upper()
-    rating = general_rating(symbol).to_string()
+def ask_for_symbol(message):
+    # Ask for the stock symbol
+    bot.reply_to(message, "Please enter the stock symbol:")
+
+@bot.message_handler(func=lambda message: True)
+def rate(message):
+    symbol = message.text.upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+    
+    if len(symbol) > 3: # Its not for Index
+        bot.send_message(message.chat.id, 'This function can just be used for stocks, not index')
+        return
+    
+    rating = general_rating(symbol)
+    report = f"The general rating for {symbol}:\n"
+    report += "\n".join([f"{col}: {rating[col].values[0]}" for col in rating.columns])
+
     # Send the report to the user
-    bot.send_message(message.chat.id, rating)
+    bot.send_message(message.chat.id, report)
 
 @bot.message_handler(commands=['findmyfav'])
 def findmyfav(message):
-
     my_params = {
         "exchangeName": "HOSE,HNX",
         "marketCap": (1_000, 200_000),
@@ -90,20 +117,71 @@ def findmyfav(message):
     # Send the report to the user
     bot.send_message(message.chat.id, f"The stocks most suitable for u are: {pass_ticker_string}")
 
+
 @bot.message_handler(commands=['pattern'])
 def find_similar_pattern(message):
     symbol = message.text.split()[1].upper()
-    start_date = message.text.split()[2] # %Y-%m-%d
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+
+    try:
+        start_date = message.text.split()[2] # %Y-%m-%d
+    except:
+        bot.send_message(message.chat.id, "Missing start_date (YYYY-mm-dd)")
+        return
+    
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+
     motif_matching = MotifMatching(symbol=symbol, start_date=start_date)
     pattern_start_date, pattern_end_date, distance = motif_matching.find_similar_subseries_with_date()
 
     report = ""
     report += f"The similar pattern for {symbol} from {start_date} to current day\n"
-    report += f"Indices: from {pattern_start_date} to {pattern_end_date} (Window_size m = {motif_matching.m})\n"
-    report += f"Distance: {distance}\n"
+    report += f"- Indices: from {pattern_start_date} to {pattern_end_date} (Window_size m = {motif_matching.m})\n"
+    report += f"- Distance: {distance:.2f}\n"
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
+@bot.message_handler(commands=['mulpattern'])
+def find_similar_pattern_multi_dimension(message):
+    symbol = message.text.split()[1].upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+    
+    try:
+        start_date = message.text.split()[2] # %Y-%m-%d
+    except:
+        bot.send_message(message.chat.id, "Missing start_date (YYYY-mm-dd)")
+        return
+    
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+
+    motif_matching = MotifMatching(symbol=symbol, start_date=start_date)
+    ticker, result = motif_matching.find_matching_series_multi_dim_with_date()
+    pattern_start_date = motif_matching.dataframe.iloc[int(result[0])].time.strftime('%Y-%m-%d')
+    pattern_end_date= motif_matching.dataframe.iloc[int(result[0]) + motif_matching.m].time.strftime('%Y-%m-%d')
+    distance = result[2]
+
+    report += f"The similar pattern for {ticker} from {start_date} to current day in multi dimension ['close','volume']\n"
+    report += f"- Indices: from {pattern_start_date} to {pattern_end_date} (Window_size m = {motif_matching.m})\n"
+    report += f"- Distance: {distance:.2f}\n"
+    # Send the report to the user
+    bot.send_message(message.chat.id, report)
+
+@bot.message_handler(commands=['findbestmotif'])
+def findpbt(message):
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+    result_dict = find_best_motifs()
+    report = ""
+    for stock, values in result_dict.items():
+        start_date, end_date, distance = values
+        report += f"Stock: {stock}\n"
+        report += f"- Date: {start_date} to {end_date}\n"
+        report += f"- Distance: {distance:.3f}\n\n"
+    # Send the report to the user
+    bot.send_message(message.chat.id, report)
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)

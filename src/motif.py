@@ -37,7 +37,7 @@ class MotifMatching:
         if self.start_date is None:
             self.start_date = (
                 datetime.strptime(self.end_date, "%Y-%m-%d") - timedelta(days=30)
-            ).strftime("%Y-%sm-%d")
+            ).strftime("%Y-%m-%d")
 
         
         self.dataframe = self.load_data()
@@ -142,14 +142,14 @@ class MotifMatching:
         plt.show()
 
     
-    def find_matching_series_multi_dim_with_date(self, dataframe ,
+    def find_matching_series_multi_dim_with_date(self,
                                               dimension_cols:list=['close', 'volume'],
                                              nn_idx_threshold:int=None, distance_threshold:float = None,
                                              plot:bool=False):
         
 
-        start_date_index = len(dataframe) - self.m
-        df = dataframe[dimension_cols].reset_index(drop = True)
+        start_date_index = len(self.dataframe) - self.m
+        df = self.dataframe[dimension_cols].reset_index(drop = True)
         mps, indices = stumpy.mstump(df, self.m)
         start_date_index = np.repeat(start_date_index, len(df.columns))
         nn_idx = indices[np.arange(len(df.columns)), start_date_index]
@@ -168,12 +168,12 @@ class MotifMatching:
         result  = np.concatenate((nn_idx, np.array([mean_distance])))
 
         print(f'm: {self.m}')
-        print(f'Ticker: {dataframe.iloc[nn_idx[0]].ticker}')
-        print(f'From {dataframe.iloc[nn_idx[0]].time} to {dataframe.iloc[nn_idx[0] + self.m].time}')
+        print(f'Ticker: {self.dataframe.iloc[nn_idx[0]].ticker}')
+        print(f'From {self.dataframe.iloc[nn_idx[0]].time} to {self.dataframe.iloc[nn_idx[0] + self.m].time}')
         print(f'nn_idx: {nn_idx}')
 
         if plot:
-            fig, axs = plt.subplots(mps.shape[0] , 2, sharex=True, gridspec_kw={'hspace': 0}, figsize=(14, 3 , mps.shape[0] * 2))
+            fig, axs = plt.subplots(mps.shape[0] * 2, sharex=True, gridspec_kw={'hspace': 0}, figsize=(14, 3 * mps.shape[0] * 2))
             for k, dim_name in enumerate(df.columns):
                 axs[k].set_ylabel(dim_name, fontsize='20')
                 axs[k].plot(df[dim_name])
@@ -195,60 +195,49 @@ class MotifMatching:
 
             plt.tight_layout()
             plt.show()
-        return dataframe.iloc[nn_idx[0]].ticker, result 
+        return self.dataframe.iloc[nn_idx[0]].ticker, result 
 
 
-    def motif_pre_filter(self)->list[str]:
-        # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
-        motif_params = {
-            "exchangeName": "HOSE",
-            "marketCap": (1_000, 200_000),
-            # "avgTradingValue20Day": (100, 20000),  # Minimum 20-day average trading value
-            # 'revenueGrowth5Year': (15,100),
-            # 'pe':(10,20),
-            # "epsGrowth5Year": (10, 100),  # Minimum 1-year EPS growth
-            # "roe": (15, 100),  # Minimum Return on Equity (ROE)
-            'priceNearRealtime': (15,80),
-            "lastQuarterProfitGrowth": (2, 100),  # Minimum last quarter profit growth
-            }
-        df = filter_stocks(motif_params)
-        return df['ticker'].to_list()
-    
-    def concat_motif_data(self, stock_list:list):
-        motif_df = pd.DataFrame()
-        # Iterate over the company list and add the historical data for each company to the DataFrame
-        for stock in stock_list:
-            motif_df = pd.concat(
-                    [motif_df, stock_historical_data(stock, "2007-01-01", self.start_date, "1D", "stock")],
-                    axis=0,
-                )
-        motif_df = convert_data_type(motif_df, [self.time_col], self.float_cols, self.cat_cols)
-        merge_df = pd.concat([motif_df, self.dataframe], axis=0)
-        return merge_df
+
+def motif_pre_filter()->list[str]:
+    # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
+    motif_params = {
+        "exchangeName": "HOSE",
+        "marketCap": (1_000, 200_000),
+        # "avgTradingValue20Day": (100, 20000),  # Minimum 20-day average trading value
+        # 'revenueGrowth5Year': (15,100),
+        # 'pe':(10,20),
+        # "epsGrowth5Year": (10, 100),  # Minimum 1-year EPS growth
+        # "roe": (15, 100),  # Minimum Return on Equity (ROE)
+        'priceNearRealtime': (15,80),
+        "lastQuarterProfitGrowth": (2, 100),  # Minimum last quarter profit growth
+        }
+    df = filter_stocks(motif_params)
+    return df['ticker'].to_list()
+
+
+def find_best_motifs(start_date = None, end_date = None,
+                    dimension_cols:list=['close', 'volume'],
+                    nn_idx_threshold:int=5, 
+                    distance_threshold:float = 5, 
+                    plot:bool = False):
+    unique_tickers = motif_pre_filter()
+    results_dict = {}  # Initialize an empty dictionary to store results
+
+    for ticker in unique_tickers:
+        motif = MotifMatching(symbol = ticker, start_date=start_date, end_date=end_date)
+        stock_name, result = motif.find_matching_series_multi_dim_with_date(
+                                                                            dimension_cols=dimension_cols,
+                                                                            nn_idx_threshold=nn_idx_threshold, 
+                                                                            distance_threshold = distance_threshold, 
+                                                                            plot = plot)
         
-    def find_best_motifs(self,
-                        dimension_cols:list=['close', 'volume'],
-                        nn_idx_threshold:int=5, 
-                        distance_threshold:float = 5, 
-                        plot:bool = False):
-        unique_tickers = self.motif_pre_filter()
-        merge_df = self.concat_motif_data(stock_list=unique_tickers)
-        results_dict = {}  # Initialize an empty dictionary to store results
+        # Check if the stock_name is not None
+        if stock_name is not None:
+            # Add the result to the dictionary with stock_name as the key
+            pattern_start_date = motif.dataframe.iloc[int(result[0])].time.strftime('%Y-%m-%d')
+            pattern_end_date= motif.dataframe.iloc[int(result[0]) + motif.m].time.strftime('%Y-%m-%d')
+            distance = result[2]
+            results_dict[stock_name] = [pattern_start_date, pattern_end_date, distance]
 
-        for ticker in unique_tickers:
-            # Extract data for the current ticker
-            stock_data = merge_df[merge_df['ticker'] == ticker]
-        
-            # Call the function for the current ticker
-            stock_name, result = self.find_matching_series_multi_dim_with_date(stock_data,
-                                                                               dimension_cols=dimension_cols,
-                                                                                nn_idx_threshold=nn_idx_threshold, 
-                                                                                distance_threshold = distance_threshold, 
-                                                                                plot = plot)
-            
-            # Check if the stock_name is not None
-            if stock_name is not None:
-                # Add the result to the dictionary with stock_name as the key
-                results_dict[stock_name] = result
-        return results_dict
-
+    return results_dict

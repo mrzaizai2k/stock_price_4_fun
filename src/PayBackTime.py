@@ -8,7 +8,7 @@ from vnstock import *
 import math
 from typing import Literal
 from datetime import datetime,timedelta
-from src.utils import *
+from src.utils import filter_stocks
 
 
 
@@ -67,7 +67,7 @@ class PayBackTime:
             data.append([col, interest, status, time_length])
 
         # Create a DataFrame with columns 'Feature', 'Interest', 'Status', and 'Time Length'
-        interest_df = pd.DataFrame(data, columns=['Feature', 'Interest', 'Status', 'Time Length'])
+        interest_df = pd.DataFrame(data, columns=['Feature', 'Interest', 'Status', 'Time_Length'])
         return interest_df
     
     def get_dataframe_by_column(self, column_name: str):
@@ -138,15 +138,15 @@ class PayBackTime:
     def calculate_payback_time(self, price = None , growth:int = None):
         # Initialize the cumulative earnings and the year
         eps = self.get_current_eps()
+        if eps < 0:
+            return None
+        
         if growth is None:
             growth = self.estimate_mean_interest()
         if price is None:
             price  = self.get_current_price()
         
         growth /= 100
-        if eps <= 0:
-            return None
-        
         cumulative_earnings = 0
         year = 0
         # Loop until the cumulative earnings exceed the price
@@ -154,33 +154,23 @@ class PayBackTime:
             # Increment the year by 1
             year += 1
             # Update the cumulative earnings by adding the EPS times the growth factor
-            cumulative_earnings += abs(eps) * (1 + growth) ** year
+            cumulative_earnings += eps * (1 + growth) ** year
         # Return the year as the payback time
         return year
 
-    
-    def get_report(self):
-        # Print the result
-        print(f"\nCurrent EPS: {self.get_current_eps()}")
-        print(f"Future PE: {self.get_future_pe():.2f}")
-        print(f"Future Growth Rate: {self.estimate_mean_interest():.2f}%")
-        self.check_debt()
-        print(f'\n {self.create_interest_dataframe()} \n')
-        if self.sticker_price is None:
-            self.sticker_price, self.MOS_price = self.calculate_price()
-        print(f"{self.symbol} - Sticker price: {self.sticker_price/1000:.2f} - MOS price: {(self.MOS_price)/1000:.2f} (nghìn VND)")
-        print(f'Current price: {self.get_current_price()/1000:.2f}')
-        print(f"The payback time for {self.symbol} is {self.calculate_payback_time()} years.")
-        print("-------------------------")
 
-    def get_string_report(self):
+    def get_report(self)->str:
         # Construct the report as a text string
         report = ""
         report += f"\nCurrent EPS: {self.get_current_eps()}\n"
         report += f"Future PE: {self.get_future_pe():.2f}\n"
         report += f"Future Growth Rate: {self.estimate_mean_interest():.2f}%\n"
         self.check_debt()
-        report += f'\n {self.create_interest_dataframe()} \n'
+        interest_df = self.create_interest_dataframe()
+                 
+        for kind, interest, status, time_length  in zip(interest_df.Feature, interest_df.Interest, interest_df.Status, interest_df.Time_Length):
+            report += f"\n{kind}: {interest:.2f}, {status}, {time_length}"
+
         if self.sticker_price is None:
             self.sticker_price, self.MOS_price = self.calculate_price()
         report += f"{self.symbol} - Sticker price: {self.sticker_price/1000:.2f} - MOS price: {(self.MOS_price)/1000:.2f}\n"
@@ -188,8 +178,10 @@ class PayBackTime:
         report += f"The payback time for {self.symbol} is {self.calculate_payback_time()} years.\n"
         report += "-------------------------\n"
         
+        print (report)
         # Return the report as a text string
         return report
+
 
 def pbt_pre_filter():
     # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
