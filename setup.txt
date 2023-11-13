@@ -119,3 +119,5 @@ widgetsnbextension==4.0.9
 python-telegram-bot
 python-dotenv
 pyTelegramBotAPI
+statsmodels
+mplfinance
