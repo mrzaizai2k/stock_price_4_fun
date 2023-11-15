@@ -1,6 +1,8 @@
 import sys
 sys.path.append("")
 import os 
+import yaml
+import schedule
 import telebot
 from telebot import types
 from dotenv import load_dotenv
@@ -10,6 +12,8 @@ load_dotenv()
 from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.utils import *
 from src.motif import MotifMatching, find_best_motifs
+from src.Indicators import *
+from src.support_resist import SupportResistFinding
 
 
 TELEBOT_API= os.getenv('TELEBOT_API')
@@ -24,6 +28,7 @@ def start(message):
 def help(message):
     bot.send_message(message.chat.id, "Available commands:\n/help - Show this help message")
     bot.send_message(message.chat.id, "\n/pbt + symbol: Calculate the payback time for a stock")
+    bot.send_message(message.chat.id, "\n/snr + symbol: Find a closest support and resistance for a stock")
     bot.send_message(message.chat.id, "\n/findpbt: find payback time stocks right now")
     bot.send_message(message.chat.id, "\n/findmyfav: find my_param stocks right now")
     bot.send_message(message.chat.id, "\n/risk + symbol: calculate how much stocks u can buy with loss/trade = 6% with max loss/capital = 2%")
@@ -31,8 +36,11 @@ def help(message):
     bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
     bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
+    bot.send_message(message.chat.id, "\n/warning_macd: Check macd")
+    bot.send_message(message.chat.id, "\n/warning_PricevsMA: check if price cross EMA")
+    bot.send_message(message.chat.id, "\n/warning_ftd: Chech Follow Through Day")
 
-@bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern'])
+@bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
 def ask_for_symbol(message):
     # Ask for the stock symbol
     markup = types.ForceReply(selective = False)
@@ -43,6 +51,8 @@ def ask_for_symbol(message):
         bot.register_next_step_handler(message, calculate_risk)
     elif message.text == '/pbt':
         bot.register_next_step_handler(message, get_paybacktime)
+    elif message.text == '/snr':
+        bot.register_next_step_handler(message, get_support_resistance)
     else: # message.text in ['/mulpattern', '/pattern']:
         bot.register_next_step_handler(message, ask_pattern_stock, message.text)
 
@@ -107,6 +117,22 @@ def get_paybacktime(message):
     pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
     report = pbt_generator.get_report()
     
+    # Send the report to the user
+    bot.send_message(message.chat.id, report)
+
+def get_support_resistance(message):
+    # Get the symbol from the user's message
+    symbol = message.text.upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+  
+    # Create the PayBackTime object and get the report
+    sr_finding = SupportResistFinding(symbol=symbol)
+    result = sr_finding.find_closest_support_resist(current_price=sr_finding.get_current_price())
+    report = f'The current price for {symbol} is {sr_finding.get_current_price()}\n'
+    report += f'- The closest support is {result[0]}\n'
+    report += f'- The closest resistance is {result[1]}\n'
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
@@ -186,6 +212,72 @@ def findpbt(message):
         report += f"- Distance: {distance:.3f}\n\n"
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+
+@bot.message_handler(commands=['warning_macd'])
+def warning_macd(message):  # Pass the message parameter
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+    with open('config/config.yaml', 'r') as file:
+        data = yaml.safe_load(file)
+    watchlist = data.get('my_watchlist', [])
+
+    warning_report = []  # Initialize an empty list to store warning reports
+    for symbol in watchlist:
+        macd = MACD(symbol)
+        if macd.is_cross_up(offset=3):
+            warning_report.append(f'{symbol}: Crossed up')
+        elif macd.is_cross_down(offset=3):
+            warning_report.append(f'{symbol}: Crossed down')
+    if warning_report:
+        # If there are warnings, send a report
+        report_message = '\n'.join(warning_report)
+        bot.send_message(message.chat.id, f'Report for stocks with warnings:\n{report_message}')
+    else:
+        # If no warnings, send a message indicating that
+        bot.send_message(message.chat.id, 'There is no warning for any stock in your watchlist')
+
+
+@bot.message_handler(commands=['warning_ftd'])
+def warning_ftd(message):  # Pass the message parameter
+    with open('config/config.yaml', 'r') as file:
+        data = yaml.safe_load(file)
+    watchlist = data.get('my_watchlist', [])
+    warning_report = []  # Initialize an empty list to store warning reports
+
+    for symbol in watchlist:
+        ftd = FTDWarning(symbol)
+        if ftd.is_FTD():
+            warning_report.append(f'This is FTD for {symbol}')
+
+    if warning_report:
+        # If there are FTD warnings, send a report
+        report_message = '\n'.join(warning_report)
+        bot.send_message(message.chat.id, f'Report for stocks with FTD warnings:\n{report_message}')
+    else:
+        # If no FTD warnings, send a message indicating that
+        bot.send_message(message.chat.id, 'There is no FTD warning for any stock in your watchlist')
+
+@bot.message_handler(commands=['warning_PricevsMA'])
+def warning_macd(message):  # Pass the message parameter
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+    with open('config/config.yaml', 'r') as file:
+        data = yaml.safe_load(file)
+    watchlist = data.get('my_watchlist', [])
+    warning_report = []  # Initialize an empty list to store warning reports
+
+    for symbol in watchlist:
+        pvma = PricevsMA(symbol)
+        if pvma.is_cross_up(offset=3):
+            warning_report.append(f'{symbol}: Crossed up')
+        elif pvma.is_cross_down(offset=3):
+            warning_report.append(f'{symbol}: Crossed down')
+
+    if warning_report:
+        # If there are warnings, send a report
+        report_message = '\n'.join(warning_report)
+        bot.send_message(message.chat.id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
+    else:
+        # If no warnings, send a message indicating that
+        bot.send_message(message.chat.id, 'There is no PricevsMA warning for any stock in your watchlist')
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)

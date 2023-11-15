@@ -120,4 +120,4 @@ python-telegram-bot
 python-dotenv
 pyTelegramBotAPI
 statsmodels
-mplfinance
+schedule
