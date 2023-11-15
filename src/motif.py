@@ -7,27 +7,21 @@ import stumpy
 from vnstock import *
 
 from datetime import datetime,timedelta
-from src.utils import *
+
 import matplotlib.pyplot as plt
 import urllib3
 
 urllib3.disable_warnings()
 
+from src.utils import *
+from src.stock_class import Stock
 
-class MotifMatching:
+
+class MotifMatching(Stock):
     def __init__(self, symbol:str = 'MWG',
                  start_date = None, end_date = None,
                    ):
-        
-        self.time_col = "time"
-        self.float_cols = ["open", "high", "low", "close", "volume"]
-        self.cat_cols = ["ticker"]
-
-        self.symbol = symbol.upper()
-        if len(self.symbol) > 3:
-            self.type = "index"
-        elif len(self.symbol) == 3:
-            self.type = 'stock'
+        super().__init__(symbol)
 
         self.end_date = end_date
         if self.end_date is None:
@@ -216,7 +210,7 @@ def motif_pre_filter()->list[str]:
     return df['ticker'].to_list()
 
 
-def find_best_motifs(start_date = None, end_date = None,
+def find_best_motifs(file_path = 'memory/best_motif_stocks.csv',start_date = None, end_date = None,
                     dimension_cols:list=['close', 'volume'],
                     nn_idx_threshold:int=5, 
                     distance_threshold:float = 5, 

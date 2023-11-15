@@ -23,7 +23,7 @@ class MACD(Stock):
         self.long_window = long_window
         self.signal_window = signal_window
         self.dataframe = self.load_data()
-        self.calculate_macd()
+        self.dataframe = self.calculate_macd()
         
         
     def load_data(self):
@@ -33,11 +33,15 @@ class MACD(Stock):
         return data
 
     def calculate_macd(self):  
+        if 'macd_hist' in self.dataframe:
+            return self.dataframe
+        self.dataframe = self.dataframe.copy()
         self.dataframe['short_ema'] = self.dataframe['close'].ewm(span=self.short_window, adjust=False).mean()
         self.dataframe['long_ema'] = self.dataframe['close'].ewm(span=self.long_window, adjust=False).mean()
         self.dataframe['macd'] = self.dataframe['short_ema'] - self.dataframe['long_ema']
         self.dataframe['signal_line'] = self.dataframe['macd'].ewm(span=self.signal_window, adjust=False).mean()
         self.dataframe['macd_hist'] = self.dataframe['macd'] - self.dataframe['signal_line']
+        return self.dataframe
 
 
     def is_cross_up(self, offset = 3):
@@ -146,14 +150,6 @@ class PricevsMA(Stock):
 
         return False  # Return False if the price doesn't cross any window size
 
-
-
-    def is_cross_down(self, offset = 1):
-        # Check if there is a crossover from positive to negative in MACD
-        past_macd = self.dataframe['macd_hist'].iloc[-1-offset]
-        today_macd = self.dataframe['macd_hist'].iloc[-1]
-        
-        return (past_macd > 0) & (today_macd < 0)
 
 class FTDWarning(Stock):
     def __init__(self, symbol:str = 'MWG', 
