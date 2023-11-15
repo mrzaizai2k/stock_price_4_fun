@@ -7,7 +7,7 @@ import stumpy
 from vnstock import *
 
 from datetime import datetime,timedelta
-from src.utils import *
+
 import matplotlib.pyplot as plt
 import urllib3
 
@@ -30,8 +30,10 @@ import statsmodels as sm
 from scipy.stats import shapiro, skew
 
 from typing import Literal
+from src.utils import *
+from src.stock_class import Stock
 
-class SupportResistFinding:
+class SupportResistFinding(Stock):
     def __init__(self, symbol:str = 'MWG',
                  start_date = None, end_date = None,
                  accuracy:float = 5.0,
@@ -42,15 +44,7 @@ class SupportResistFinding:
         T = The window_size (default: 20 is 1 month trading)
         
         '''
-        self.time_col = "time"
-        self.float_cols = ["open", "high", "low", "close", "volume"]
-        self.cat_cols = ["ticker"]
-
-        self.symbol = symbol.upper()
-        if len(self.symbol) > 3:
-            self.type = "index"
-        elif len(self.symbol) == 3:
-            self.type = 'stock'
+        super().__init__(symbol)
 
         self.end_date = end_date
         if self.end_date is None:
@@ -162,18 +156,12 @@ class SupportResistFinding:
     
     def find_closest_support_resist(self, current_price:float) -> list:
         price_list = self.calculate_support_resistance_band()
-        closest_support = min(price_list, key=lambda x: abs(x - current_price))
+        # Find the closest support (equal to or less than the current price)
+        supports = [price for price in price_list if price <= current_price]
+        closest_support = max(supports, default=None)
 
+        # Find the closest resistance (greater than the current price)
         resistance_candidates = [price for price in price_list if price > current_price]
         closest_resistance = min(resistance_candidates, default=None)
 
         return [closest_support, closest_resistance]
-    
-    def get_current_price(self):
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=3)).strftime('%Y-%m-%d')
-        df =  stock_historical_data(symbol=self.symbol, 
-                            start_date=start_date, 
-                            end_date=current_date, resolution='1D', type=self.type, beautify=True)
-        current_price = df.close.iloc[0]
-        return current_price
