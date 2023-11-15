@@ -9,17 +9,17 @@ import math
 from typing import Literal
 from datetime import datetime,timedelta
 from src.utils import filter_stocks
+from src.stock_class import Stock
 
 
 
-class PayBackTime:
+class PayBackTime(Stock):
     def __init__(self, symbol: str = 'GEX',
                  report_range: Literal['yearly', 'quarterly'] = 'yearly',
                  is_all: bool = True,
                  window_size:int = 10,):
-
+        super().__init__(symbol)
         self.window_size = window_size
-        self.symbol = symbol.upper()
         self.report_range = report_range
         self.is_all = is_all
         self.sticker_price, self.MOS_price = None,None
@@ -102,14 +102,6 @@ class PayBackTime:
     def get_future_pe(self):
         return self.indicator_df['priceToEarning'].mean()
 
-    def get_current_price(self):
-        current_date = datetime.now().strftime('%Y-%m-%d')
-        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=3)).strftime('%Y-%m-%d')
-        df =  stock_historical_data(symbol=self.symbol, 
-                            start_date=start_date, 
-                            end_date=current_date, resolution='1D', type='stock', beautify=True)
-        current_price = df.close.iloc[0]
-        return current_price
 
 
     def calculate_price(self, current_eps=None, future_pe=None, future_growth_rate=None,
@@ -203,16 +195,44 @@ def pbt_pre_filter():
     pbt_stocks = df.ticker.to_list()
     return pbt_stocks
 
-def find_PBT_stocks(report = False):
-    pbt_stocks = pbt_pre_filter()
-    pass_ticker = []
-    for stock in pbt_stocks:
-        pbt_generator = pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
-        # pbt_generator.calculate_price()
-        pbt_years = pbt_generator.calculate_payback_time()
-        if pbt_years is not None and pbt_years <= 5:
-            pass_ticker.append(pbt_generator.symbol)
-            if report: 
-                pbt_generator.get_report()
-    print(f"PBT stocks: {pass_ticker}")
-    return pass_ticker
+
+def find_PBT_stocks(file_path="memory/paybacktime.csv", report=False):
+    # Step 1: Read the existing file
+    try:
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=["Date", "Stocks"])
+
+    # Step 2: Check if there is a stock list for the current date
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    if current_date in df["Date"].values:
+        # If stock list exists for the current date, return pass_ticker
+        pass_ticker = df.loc[df["Date"] == current_date, "Stocks"].iloc[0]
+        pass_ticker = pass_ticker.split(',')
+        print(f"Pass_ticker for {current_date} already exists: {pass_ticker}")
+    else:
+        # If not, use find_PBT_stocks to get pass_ticker
+        # Your existing implementation for finding PBT stocks
+        pbt_stocks = pbt_pre_filter()
+        pass_ticker = []
+        for stock in pbt_stocks:
+            pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
+            pbt_years = pbt_generator.calculate_payback_time()
+            if pbt_years is not None and pbt_years <= 5:
+                pass_ticker.append(pbt_generator.symbol)
+
+        # Step 3: Update the DataFrame with pass_ticker and current date
+        new_row = {"Date": current_date, "Stocks": ','.join(pass_ticker)}  # Join the list into a string
+        df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
+
+        # Step 4: Write the updated DataFrame back to the file
+        df.to_csv(file_path, index=False)
+        print(f"File updated with pass_ticker for {current_date}")
+
+    if report:
+        for stock in pass_ticker:
+            print(stock)
+            pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
+            pbt_generator.get_report()
+
+    return pass_ticker  
