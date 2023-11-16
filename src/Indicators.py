@@ -17,18 +17,29 @@ from src.stock_class import Stock
 from src.utils import *
 
 class MACD(Stock):
-    def __init__(self, symbol:str = 'MWG', short_window=12, long_window=26, signal_window=9):
+    def __init__(self, symbol:str = 'MWG', short_window=12, long_window=26, signal_window=9,
+                 start_date:str =None, end_date:str = None):
         super().__init__(symbol)
         self.short_window = short_window
         self.long_window = long_window
         self.signal_window = signal_window
+        self.end_date = end_date
+        if self.end_date is None:
+            self.end_date = datetime.now().strftime("%Y-%m-%d")
+
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = (
+                datetime.strptime(self.end_date, "%Y-%m-%d") - timedelta(days=60)
+            ).strftime("%Y-%m-%d")
+
         self.dataframe = self.load_data()
         self.dataframe = self.calculate_macd()
-        
+
+
         
     def load_data(self):
-        curent_date = datetime.now().strftime("%Y-%m-%d")
-        data = stock_historical_data(self.symbol, "2007-01-01", curent_date, "1D", type = self.type)
+        data = stock_historical_data(self.symbol, self.start_date ,self.end_date, "1D", type = self.type)
         data = convert_data_type(data, [self.time_col], self.float_cols, self.cat_cols)
         return data
 
@@ -98,16 +109,28 @@ class MACD(Stock):
 class PricevsMA(Stock):
     def __init__(self, symbol:str = 'MWG', 
                  window_size:list[int] = [12,26,50],
+                 start_date:str = None,
+                 end_date:str = None,
                  ):
         super().__init__(symbol)
         self.window_size = window_size
+
+        self.end_date = end_date
+        if self.end_date is None:
+            self.end_date = datetime.now().strftime("%Y-%m-%d")
+
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = (
+                datetime.strptime(self.end_date, "%Y-%m-%d") - timedelta(days=max(window_size))
+            ).strftime("%Y-%m-%d")
+
         self.dataframe = self.load_data()
         self.calculate_ma()
         
         
     def load_data(self):
-        curent_date = datetime.now().strftime("%Y-%m-%d")
-        data = stock_historical_data(self.symbol, "2007-01-01", curent_date, "1D", type = self.type)
+        data = stock_historical_data(self.symbol, self.start_date, self.end_date, "1D", type = self.type)
         data = convert_data_type(data, [self.time_col], self.float_cols, self.cat_cols)
         return data
 
@@ -155,16 +178,28 @@ class FTDWarning(Stock):
     def __init__(self, symbol:str = 'MWG', 
                  window_size:int = 20,
                  percent_diff = 3,
+                 start_date:str = None,
+                 end_date:str = None,
                  ):
         super().__init__(symbol)
+        
+        self.end_date = end_date
+        if self.end_date is None:
+            self.end_date = datetime.now().strftime("%Y-%m-%d")
+
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = (
+                datetime.strptime(self.end_date, "%Y-%m-%d") - timedelta(days=window_size+1)
+            ).strftime("%Y-%m-%d")
+
         self.dataframe = self.load_data()
         self.window_size = window_size
         self.percent_diff = percent_diff
-        
+
         
     def load_data(self):
-        curent_date = datetime.now().strftime("%Y-%m-%d")
-        data = stock_historical_data(self.symbol, "2007-01-01", curent_date, "1D", type = self.type)
+        data = stock_historical_data(self.symbol, self.start_date ,self.end_date, "1D", type = self.type)
         data = convert_data_type(data, [self.time_col], self.float_cols, self.cat_cols)
         return data
     

@@ -199,51 +199,6 @@ def pbt_pre_filter():
     return pbt_stocks
 
 
-# def find_PBT_stocks(file_path="memory/paybacktime.csv", report=False):
-
-#     folder_path = os.path.dirname(file_path)
-#     if not os.path.exists(folder_path):
-#         os.makedirs(folder_path)
-
-#     try:
-#         df = pd.read_csv(file_path)
-#     except FileNotFoundError:
-#         df = pd.DataFrame(columns=["Date", "Stocks"])
-
-#     # Step 2: Check if there is a stock list for the current date
-#     current_date = datetime.now().strftime("%Y-%m-%d")
-#     if current_date in df["Date"].values:
-#         # If stock list exists for the current date, return pass_ticker
-#         pass_ticker = df.loc[df["Date"] == current_date, "Stocks"].iloc[0]
-#         pass_ticker = pass_ticker.split(',')
-#         print(f"Pass_ticker for {current_date} already exists: {pass_ticker}")
-#     else:
-#         # If not, use find_PBT_stocks to get pass_ticker
-#         # Your existing implementation for finding PBT stocks
-#         pbt_stocks = pbt_pre_filter()
-#         pass_ticker = []
-#         for stock in pbt_stocks:
-#             pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
-#             pbt_years = pbt_generator.calculate_payback_time()
-#             if pbt_years is not None and pbt_years <= 5:
-#                 pass_ticker.append(pbt_generator.symbol)
-
-#         df = df.iloc[1:].copy() #just save the new record
-#         new_row = {"Date": current_date, "Stocks": ','.join(pass_ticker)}  # Join the list into a string
-#         df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
-
-#         # Step 4: Write the updated DataFrame back to the file
-#         df.to_csv(file_path, index=False)
-#         print(f"File updated with pass_ticker for {current_date}")
-
-#     if report:
-#         for stock in pass_ticker:
-#             print(stock)
-#             pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
-#             pbt_generator.get_report()
-
-#     return pass_ticker  
-
 @memoization
 def find_PBT_stocks(file_path="memory/paybacktime.csv"):
     pbt_stocks = pbt_pre_filter()

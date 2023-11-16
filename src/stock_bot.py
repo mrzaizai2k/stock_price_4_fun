@@ -171,7 +171,7 @@ def rate(message):
 @bot.message_handler(commands=['findpbt'])
 def findpbt(message):
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    pass_ticker = find_PBT_stocks()
+    pass_ticker = find_PBT_stocks(file_path="memory/paybacktime.csv")
     pass_ticker_string = ", ".join(pass_ticker)
     print('pass_ticker_string',pass_ticker_string)
 
