@@ -36,9 +36,9 @@ def help(message):
     bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
     bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
-    bot.send_message(message.chat.id, "\n/warning_macd: Check macd")
-    bot.send_message(message.chat.id, "\n/warning_PricevsMA: check if price cross EMA")
-    bot.send_message(message.chat.id, "\n/warning_ftd: Chech Follow Through Day")
+    bot.send_message(message.chat.id, "\n/warningmacd: Check macd")
+    bot.send_message(message.chat.id, "\n/warningpricevsma: check if price cross EMA")
+    bot.send_message(message.chat.id, "\n/warningftd: Check Follow Through Day")
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
 def ask_for_symbol(message):
@@ -213,7 +213,7 @@ def findpbt(message):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
-@bot.message_handler(commands=['warning_macd'])
+@bot.message_handler(commands=['warningmacd'])
 def warning_macd(message):  # Pass the message parameter
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     with open('config/config.yaml', 'r') as file:
@@ -236,7 +236,7 @@ def warning_macd(message):  # Pass the message parameter
         bot.send_message(message.chat.id, 'There is no warning for any stock in your watchlist')
 
 
-@bot.message_handler(commands=['warning_ftd'])
+@bot.message_handler(commands=['warningftd'])
 def warning_ftd(message):  # Pass the message parameter
     with open('config/config.yaml', 'r') as file:
         data = yaml.safe_load(file)
@@ -256,7 +256,7 @@ def warning_ftd(message):  # Pass the message parameter
         # If no FTD warnings, send a message indicating that
         bot.send_message(message.chat.id, 'There is no FTD warning for any stock in your watchlist')
 
-@bot.message_handler(commands=['warning_PricevsMA'])
+@bot.message_handler(commands=['warningpricevsma'])
 def warning_macd(message):  # Pass the message parameter
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     with open('config/config.yaml', 'r') as file:
