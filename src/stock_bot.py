@@ -38,7 +38,8 @@ def help(message):
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
     bot.send_message(message.chat.id, "\n/warningmacd: Check macd")
     bot.send_message(message.chat.id, "\n/warningpricevsma: check if price cross EMA")
-    bot.send_message(message.chat.id, "\n/warningftd: Check Follow Through Day")
+    bot.send_message(message.chat.id, "\n/warningbigday: Check Follow Through Day or Distribution Day")
+    bot.send_message(message.chat.id, "\n/warningsnr: Check if price is in Support or Resistance Range")
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
 def ask_for_symbol(message):
@@ -234,9 +235,10 @@ def warning_macd(message):  # Pass the message parameter
     else:
         # If no warnings, send a message indicating that
         bot.send_message(message.chat.id, 'There is no warning for any stock in your watchlist')
+        
 
 
-@bot.message_handler(commands=['warningftd'])
+@bot.message_handler(commands=['warningbigday'])
 def warning_ftd(message):  # Pass the message parameter
     with open('config/config.yaml', 'r') as file:
         data = yaml.safe_load(file)
@@ -244,17 +246,19 @@ def warning_ftd(message):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
 
     for symbol in watchlist:
-        ftd = FTDWarning(symbol)
-        if ftd.is_FTD():
-            warning_report.append(f'This is FTD for {symbol}')
+        bigday = BigDayWarning(symbol, percent_diff=3)
+        if bigday.is_big_increase():
+            warning_report.append(f'Powerful UP for {symbol}')
+        if bigday.is_big_decrease():
+            warning_report.append(f'Powerful DOWN for {symbol}')
 
     if warning_report:
         # If there are FTD warnings, send a report
         report_message = '\n'.join(warning_report)
-        bot.send_message(message.chat.id, f'Report for stocks with FTD warnings:\n{report_message}')
+        bot.send_message(message.chat.id, f'Report for stocks with big day warnings:\n{report_message}')
     else:
         # If no FTD warnings, send a message indicating that
-        bot.send_message(message.chat.id, 'There is no FTD warning for any stock in your watchlist')
+        bot.send_message(message.chat.id, 'There is no big day warning for any stock in your watchlist')
 
 @bot.message_handler(commands=['warningpricevsma'])
 def warning_macd(message):  # Pass the message parameter
@@ -278,6 +282,39 @@ def warning_macd(message):  # Pass the message parameter
     else:
         # If no warnings, send a message indicating that
         bot.send_message(message.chat.id, 'There is no PricevsMA warning for any stock in your watchlist')
+
+
+@bot.message_handler(commands=['warningsnr'])
+def warning_macd(message, tolerance_percent:float = 1.0):  # Pass the message parameter
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+    with open('config/config.yaml', 'r') as file:
+        data = yaml.safe_load(file)
+    watchlist = data.get('my_watchlist', [])
+
+    warning_report = []  # Initialize an empty list to store warning reports
+    for symbol in watchlist:
+        sr_finding = SupportResistFinding(symbol=symbol)
+        current_price = sr_finding.get_current_price()
+
+        # Find the closest support and resistance levels
+        support, resistance = sr_finding.find_closest_support_resist(current_price=current_price)
+
+        # Set the tolerance percentage
+        tolerance_percent = tolerance_percent / 100  # 1 percent
+
+        # Check if the current price is within the tolerance range of support or resistance
+        if support <= current_price <= support * (1 + tolerance_percent):
+            warning_report.append(f'{symbol}: Meeting Support')
+        elif resistance * (1 - tolerance_percent) <= current_price <= resistance:
+            warning_report.append(f'{symbol}: Meeting Resistance')
+
+    if warning_report:
+        # If there are warnings, send a report
+        report_message = '\n'.join(warning_report)
+        bot.send_message(message.chat.id, f'Support/Resistance warning for stocks:\n{report_message}')
+    else:
+        # If no warnings, send a message indicating that
+        bot.send_message(message.chat.id, 'There is no Support/Resistance warning for any stock in your watchlist')
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
