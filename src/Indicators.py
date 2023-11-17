@@ -174,7 +174,8 @@ class PricevsMA(Stock):
         return False  # Return False if the price doesn't cross any window size
 
 
-class FTDWarning(Stock):
+class BigDayWarning(Stock):
+    '''Consider if that day has powerful Increase of Decrease'''
     def __init__(self, symbol:str = 'MWG', 
                  window_size:int = 20,
                  percent_diff = 3,
@@ -206,7 +207,7 @@ class FTDWarning(Stock):
     def calculate_avg_volume(self):
         return  self.dataframe['volume'].iloc[-1 - self.window_size: -1].mean()
     
-    def is_FTD(self):
+    def is_big_increase(self):
         current_vol = self.get_current_volume()
         current_price = self.get_current_price()
         
@@ -214,4 +215,17 @@ class FTDWarning(Stock):
             return True
         return False
 
+    def is_big_decrease(self):
+        current_vol = self.get_current_volume()
+        current_price = self.get_current_price()
 
+        # Assuming your class has a dataframe attribute named 'dataframe'
+        yesterday_close_price = self.dataframe.close.iloc[-2]
+
+        # Calculate the threshold for a significant decrease
+        threshold_price = (1 - (self.percent_diff / 100)) * yesterday_close_price
+
+        # Check if both volume and price have decreased significantly
+        if current_vol >= self.calculate_avg_volume() and current_price < threshold_price:
+            return True
+        return False
