@@ -150,6 +150,8 @@ def calculate_risk(message):
     mess = ""
     mess += f"You can buy {num_stocks} stocks at the price of {stock_price} each\n"
     mess += f'Total price: {stock_price*num_stocks/1_000_000} (triệu VND)\n'
+    mess += f'The fee is: 0.188% -> {((0.188/100) * stock_price*num_stocks)/1_000} (nghìn VND)\n'
+
     bot.send_message(message.chat.id, mess)
 
 
