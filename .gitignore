@@ -3,3 +3,4 @@
 config/config.py
 .env
 *.csv
+/data

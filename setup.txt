@@ -121,3 +121,4 @@ python-dotenv
 pyTelegramBotAPI
 statsmodels
 schedule
+xlrd
