@@ -3,6 +3,9 @@ sys.path.append("")
 import os 
 import yaml
 import schedule
+from threading import Thread
+from time import sleep
+
 import telebot
 from telebot import types
 from dotenv import load_dotenv
@@ -14,6 +17,7 @@ from src.utils import *
 from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import *
 from src.support_resist import SupportResistFinding
+
 
 
 TELEBOT_API= os.getenv('TELEBOT_API')
@@ -36,10 +40,10 @@ def help(message):
     bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
     bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
-    bot.send_message(message.chat.id, "\n/warningmacd: Check macd")
-    bot.send_message(message.chat.id, "\n/warningpricevsma: check if price cross EMA")
-    bot.send_message(message.chat.id, "\n/warningbigday: Check Follow Through Day or Distribution Day")
-    bot.send_message(message.chat.id, "\n/warningsnr: Check if price is in Support or Resistance Range")
+    # bot.send_message(message.chat.id, "\n/warningmacd: Check macd")
+    # bot.send_message(message.chat.id, "\n/warningpricevsma: check if price cross EMA")
+    # bot.send_message(message.chat.id, "\n/warningbigday: Check Follow Through Day or Distribution Day")
+    # bot.send_message(message.chat.id, "\n/warningsnr: Check if price is in Support or Resistance Range")
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
 def ask_for_symbol(message):
@@ -214,12 +218,109 @@ def findpbt(message):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
-@bot.message_handler(commands=['warningmacd'])
-def warning_macd(message):  # Pass the message parameter
-    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    with open('config/config.yaml', 'r') as file:
-        data = yaml.safe_load(file)
-    watchlist = data.get('my_watchlist', [])
+# @bot.message_handler(commands=['warningmacd'])
+# def warning_macd(message):  # Pass the message parameter
+#     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+#     with open('config/config.yaml', 'r') as file:
+#         data = yaml.safe_load(file)
+#     watchlist = data.get('my_watchlist', [])
+
+#     warning_report = []  # Initialize an empty list to store warning reports
+#     for symbol in watchlist:
+#         macd = MACD(symbol)
+#         if macd.is_cross_up(offset=3):
+#             warning_report.append(f'{symbol}: Crossed up')
+#         elif macd.is_cross_down(offset=3):
+#             warning_report.append(f'{symbol}: Crossed down')
+#     if warning_report:
+#         # If there are warnings, send a report
+#         report_message = '\n'.join(warning_report)
+#         bot.send_message(message.chat.id, f'Report for stocks with warnings:\n{report_message}')
+#     else:
+#         # If no warnings, send a message indicating that
+#         bot.send_message(message.chat.id, 'There is no warning for any stock in your watchlist')
+        
+
+
+# @bot.message_handler(commands=['warningbigday'])
+# def warningbigday(message):  # Pass the message parameter
+#     with open('config/config.yaml', 'r') as file:
+#         data = yaml.safe_load(file)
+#     watchlist = data.get('my_watchlist', [])
+#     warning_report = []  # Initialize an empty list to store warning reports
+
+#     for symbol in watchlist:
+#         bigday = BigDayWarning(symbol, percent_diff=3)
+#         if bigday.is_big_increase():
+#             warning_report.append(f'Powerful UP for {symbol}')
+#         if bigday.is_big_decrease():
+#             warning_report.append(f'Powerful DOWN for {symbol}')
+
+#     if warning_report:
+#         # If there are FTD warnings, send a report
+#         report_message = '\n'.join(warning_report)
+#         bot.send_message(message.chat.id, f'Report for stocks with big day warnings:\n{report_message}')
+#     else:
+#         # If no FTD warnings, send a message indicating that
+#         bot.send_message(message.chat.id, 'There is no big day warning for any stock in your watchlist')
+
+# @bot.message_handler(commands=['warningpricevsma'])
+# def warningpricevsma(message):  # Pass the message parameter
+#     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+#     with open('config/config.yaml', 'r') as file:
+#         data = yaml.safe_load(file)
+#     watchlist = data.get('my_watchlist', [])
+#     warning_report = []  # Initialize an empty list to store warning reports
+
+#     for symbol in watchlist:
+#         pvma = PricevsMA(symbol)
+#         if pvma.is_cross_up(offset=3):
+#             warning_report.append(f'{symbol}: Crossed up')
+#         elif pvma.is_cross_down(offset=3):
+#             warning_report.append(f'{symbol}: Crossed down')
+
+#     if warning_report:
+#         # If there are warnings, send a report
+#         report_message = '\n'.join(warning_report)
+#         bot.send_message(message.chat.id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
+#     else:
+#         # If no warnings, send a message indicating that
+#         bot.send_message(message.chat.id, 'There is no PricevsMA warning for any stock in your watchlist')
+
+
+# @bot.message_handler(commands=['warningsnr'])
+# def warningsnr(message, tolerance_percent:float = 1.0):  # Pass the message parameter
+#     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+#     with open('config/config.yaml', 'r') as file:
+#         data = yaml.safe_load(file)
+#     watchlist = data.get('my_watchlist', [])
+
+#     warning_report = []  # Initialize an empty list to store warning reports
+#     for symbol in watchlist:
+#         sr_finding = SupportResistFinding(symbol=symbol)
+#         current_price = sr_finding.get_current_price()
+
+#         # Find the closest support and resistance levels
+#         support, resistance = sr_finding.find_closest_support_resist(current_price=current_price)
+
+#         # Set the tolerance percentage
+#         tolerance_percent = tolerance_percent / 100  # 1 percent
+
+#         # Check if the current price is within the tolerance range of support or resistance
+#         if support <= current_price <= support * (1 + tolerance_percent):
+#             warning_report.append(f'{symbol}: Meeting Support')
+#         elif resistance * (1 - tolerance_percent) <= current_price <= resistance:
+#             warning_report.append(f'{symbol}: Meeting Resistance')
+
+#     if warning_report:
+#         # If there are warnings, send a report
+#         report_message = '\n'.join(warning_report)
+#         bot.send_message(message.chat.id, f'Support/Resistance warning for stocks:\n{report_message}')
+#     else:
+#         # If no warnings, send a message indicating that
+#         bot.send_message(message.chat.id, 'There is no Support/Resistance warning for any stock in your watchlist')
+
+def warning_macd(watchlist, user_id):  # Pass the message parameter
 
     warning_report = []  # Initialize an empty list to store warning reports
     for symbol in watchlist:
@@ -231,18 +332,14 @@ def warning_macd(message):  # Pass the message parameter
     if warning_report:
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
-        bot.send_message(message.chat.id, f'Report for stocks with warnings:\n{report_message}')
+        return bot.send_message(user_id, f'Report for stocks with warnings:\n{report_message}')
     else:
         # If no warnings, send a message indicating that
-        bot.send_message(message.chat.id, 'There is no warning for any stock in your watchlist')
-        
+        return bot.send_message(user_id, 'There is no warning for any stock in your watchlist')
 
 
-@bot.message_handler(commands=['warningbigday'])
-def warning_ftd(message):  # Pass the message parameter
-    with open('config/config.yaml', 'r') as file:
-        data = yaml.safe_load(file)
-    watchlist = data.get('my_watchlist', [])
+def warningbigday(watchlist, user_id):  # Pass the message parameter
+
     warning_report = []  # Initialize an empty list to store warning reports
 
     for symbol in watchlist:
@@ -255,17 +352,13 @@ def warning_ftd(message):  # Pass the message parameter
     if warning_report:
         # If there are FTD warnings, send a report
         report_message = '\n'.join(warning_report)
-        bot.send_message(message.chat.id, f'Report for stocks with big day warnings:\n{report_message}')
+        return bot.send_message(user_id, f'Report for stocks with big day warnings:\n{report_message}')
     else:
         # If no FTD warnings, send a message indicating that
-        bot.send_message(message.chat.id, 'There is no big day warning for any stock in your watchlist')
+        return bot.send_message(user_id, 'There is no big day warning for any stock in your watchlist')
 
-@bot.message_handler(commands=['warningpricevsma'])
-def warning_macd(message):  # Pass the message parameter
-    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    with open('config/config.yaml', 'r') as file:
-        data = yaml.safe_load(file)
-    watchlist = data.get('my_watchlist', [])
+
+def warningpricevsma(watchlist, user_id):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
 
     for symbol in watchlist:
@@ -278,19 +371,12 @@ def warning_macd(message):  # Pass the message parameter
     if warning_report:
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
-        bot.send_message(message.chat.id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
+        return bot.send_message(user_id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
     else:
         # If no warnings, send a message indicating that
-        bot.send_message(message.chat.id, 'There is no PricevsMA warning for any stock in your watchlist')
+        return bot.send_message(user_id, 'There is no PricevsMA warning for any stock in your watchlist')
 
-
-@bot.message_handler(commands=['warningsnr'])
-def warning_macd(message, tolerance_percent:float = 1.0):  # Pass the message parameter
-    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    with open('config/config.yaml', 'r') as file:
-        data = yaml.safe_load(file)
-    watchlist = data.get('my_watchlist', [])
-
+def warningsnr(watchlist, user_id, tolerance_percent:float = 1.0):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
     for symbol in watchlist:
         sr_finding = SupportResistFinding(symbol=symbol)
@@ -311,10 +397,11 @@ def warning_macd(message, tolerance_percent:float = 1.0):  # Pass the message pa
     if warning_report:
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
-        bot.send_message(message.chat.id, f'Support/Resistance warning for stocks:\n{report_message}')
+        return bot.send_message(user_id, f'Support/Resistance warning for stocks:\n{report_message}')
     else:
         # If no warnings, send a message indicating that
-        bot.send_message(message.chat.id, 'There is no Support/Resistance warning for any stock in your watchlist')
+        return bot.send_message(user_id, 'There is no Support/Resistance warning for any stock in your watchlist')
+
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
@@ -322,8 +409,46 @@ def echo(message):
     response_message = "Apologies, I didn't understand that command. 😕\nPlease type /help to see the list of available commands."
     bot.send_message(message.chat.id, response_message)
 
+
+def schedule_checker():
+    while True:
+        schedule.run_pending()
+        sleep(1)
+
+
 def main():
-    bot.polling()
+
+    data_config_path = 'config/config.yaml'
+    with open(data_config_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    watchlist = data.get('my_watchlist', [])
+    USER_ID = os.getenv('USER_ID')
+
+    schedule.every(1).minutes.do(warning_macd, watchlist=watchlist, user_id=USER_ID)
+    schedule.every(1).minutes.do(warningbigday, watchlist=watchlist, user_id=USER_ID)
+    schedule.every(1).minutes.do(warningpricevsma, watchlist=watchlist, user_id=USER_ID)
+    schedule.every(1).minutes.do(warningsnr, watchlist=watchlist, user_id=USER_ID)
+
+
+    # Spin up a thread to run the schedule check so it doesn't block your bot.
+    # This will take the function schedule_checker which will check every second
+    # to see if the scheduled job needs to be ran.
+    Thread(target=schedule_checker).start() 
+
+    while True:
+        try:
+            bot.infinity_polling()
+            
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            print("Resetting the bot in 3 seconds...")
+            time.sleep(3)  # Pause for 3 seconds before restarting
+            main()  # Restart the main function
+        
+        finally:
+            # Clear scheduled jobs to avoid duplication on restart
+            schedule.clear()
 
 if __name__ == "__main__":
     main()
