@@ -168,7 +168,7 @@ class PayBackTime(Stock):
 
         if self.sticker_price is None:
             self.sticker_price, self.MOS_price = self.calculate_price()
-        report += f"{self.symbol} - Sticker price: {self.sticker_price/1000:.2f} - MOS price: {(self.MOS_price)/1000:.2f}\n"
+        report += f"\n{self.symbol} - Sticker price: {self.sticker_price/1000:.2f} - MOS price: {(self.MOS_price)/1000:.2f}\n"
         report += f'Current price: {self.get_current_price()/1000:.2f}\n'
         report += f"The payback time for {self.symbol} is {self.calculate_payback_time()} years.\n"
         report += "-------------------------\n"
