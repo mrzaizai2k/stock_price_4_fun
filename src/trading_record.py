@@ -12,17 +12,19 @@ import plotly.express as px
 import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
-class StrategyAnalyzer:
-    def __init__(self, df, start_date = None, end_date = None, time_col:str = 'date'):
+
+class WinLossAnalyzer:
+    def __init__(self, win_loss_df_path:str = 'data/BaoCaoLaiLo_058C647873.csv',
+                  start_date = None, end_date = None, time_col:str = 'date'):
         """
         Initialize the StrategyAnalyzer with trading data.
 
         Parameters:
         - df (pd.DataFrame): DataFrame containing trading data.
         """
-        self.df = df
+        self.df_path = win_loss_df_path
+        self.df = self.load_data()
         self.time_col = time_col
-        self.df[self.time_col] = pd.to_datetime(self.df[self.time_col])
 
         self.end_date = end_date
         if self.end_date is None:
@@ -35,6 +37,33 @@ class StrategyAnalyzer:
         self.df = self.filter_data()
 
 
+    def load_data(self):
+        df = pd.read_csv(self.df_path, encoding='latin1', skiprows=5)
+        column_order = ['date', 'sell_vol', 'sell_price', 'sell_value', 'capital_price', 'capital_value', 'dividend', 'win_loss_value', 'win_loss_percent']
+        df.columns = column_order
+        df = df.drop(df.index[-1])
+        df = self.preprocess_data(df) 
+        return df
+
+    def preprocess_data(self, df):
+        df['win_loss_percent'] = df['win_loss_percent'].str.rstrip('%')
+        df['stock_name'] = df['date'].where(df['date'].str.len() == 3)
+        df['stock_name'] = df['stock_name'].ffill().astype('category')
+        df = df[df['date'].str.len() != 3]
+        df['date'] = pd.to_datetime(df['date'], format='%d/%m/%Y')
+        df = df.drop('dividend', axis=1)
+        num_cols = ['sell_vol', 'sell_price', 'sell_value', 'capital_price',
+                'capital_value', 'win_loss_value', 'win_loss_percent']
+        df[num_cols] = df[num_cols].replace(',', '', regex=True)
+
+        # Convert columns to numeric
+        df[num_cols] = df[num_cols].apply(pd.to_numeric)
+        for col in num_cols:
+            df[col] = df[col].astype(float)
+        return df
+
+        
+
     def filter_data(self):
         filtered_data = self.df[
             (self.df[self.time_col] >= self.start_date) & (self.df[self.time_col] <= self.end_date)
@@ -43,10 +72,11 @@ class StrategyAnalyzer:
     
 
     def calculate_win_ratio(self):
-        total_trades = len(self.df)
-        winning_trades = len(self.df[self.df['win_loss_value'] > 0])
-        win_ratio = winning_trades / total_trades
-        return win_ratio
+        total_trades_amount = self.df['sell_value'].sum()
+        winning_trades = self.df[self.df['win_loss_value'] > 0]
+        winning_trades_amount = winning_trades['sell_value'].sum()
+        win_ratio = winning_trades_amount / total_trades_amount
+        return win_ratio*100
 
     def calculate_payoff_ratio(self):
         average_win = self.df[self.df['win_loss_value'] > 0]['win_loss_value'].mean()
@@ -61,10 +91,10 @@ class StrategyAnalyzer:
         return self.df['win_loss_value'].min()
 
     def calculate_largest_winning_trade_percent(self):
-        return self.df['win_loss_percent'].max()
+        return 100*self.df['win_loss_percent'].max()
 
     def calculate_largest_losing_trade_percent(self):
-        return self.df['win_loss_percent'].min()
+        return 100*self.df['win_loss_percent'].min()
 
     def calculate_average_winning_trade(self):
         return self.df[self.df['win_loss_value'] > 0]['win_loss_value'].mean()
@@ -74,11 +104,13 @@ class StrategyAnalyzer:
 
     def calculate_largest_drawdown(self):
         cumulative_returns = (1 + self.df['win_loss_percent'] / 100).cumprod()
-        return (cumulative_returns / cumulative_returns.cummax() - 1).min()
+        largest_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).min()
+        return 100*largest_drawdown
 
     def calculate_average_drawdown(self):
         cumulative_returns = (1 + self.df['win_loss_percent'] / 100).cumprod()
-        return (cumulative_returns / cumulative_returns.cummax() - 1).mean()
+        average_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).mean()
+        return 100*average_drawdown
 
     def calculate_total_days(self):
         return (self.df[self.time_col].max() - self.df[self.time_col].min()).days
@@ -132,9 +164,19 @@ class StrategyAnalyzer:
         # Step 6: Show the plot
         fig.show()
 
+    def top_best_stock(self, top_k: int = 3):
+        profitable_stocks = self.df[self.df['win_loss_value'] > 0].groupby('stock_name')['win_loss_value'].sum()
+        top_profitable_stocks = profitable_stocks.nlargest(top_k).reset_index()
+        return list(zip(top_profitable_stocks['stock_name'], top_profitable_stocks['win_loss_value']))
 
 
-    def analyze_strategy(self):
+    def top_worst_stock(self, top_k: int = 3):
+        losing_stocks = self.df[self.df['win_loss_value'] < 0].groupby('stock_name')['win_loss_value'].sum()
+        top_losing_stocks = losing_stocks.nsmallest(top_k).reset_index()
+        return list(zip(top_losing_stocks['stock_name'], top_losing_stocks['win_loss_value']))
+
+
+    def analyze_strategy(self) ->dict:
         metrics = {
             'Win Ratio': self.calculate_win_ratio(),
             'Payoff Ratio': self.calculate_payoff_ratio(),
@@ -144,8 +186,8 @@ class StrategyAnalyzer:
             'Largest Losing Trade percent': self.calculate_largest_losing_trade_percent(),
             'Average Winning Trade': self.calculate_average_winning_trade(),
             'Average Losing Trade': self.calculate_average_losing_trade(),
-            'Largest % Drawdown': self.calculate_largest_drawdown() * 100,  # Convert to percentage
-            'Average % Drawdown': self.calculate_average_drawdown() * 100,  # Convert to percentage
+            'Largest % Drawdown': self.calculate_largest_drawdown(),  # Convert to percentage
+            'Average % Drawdown': self.calculate_average_drawdown(),  # Convert to percentage
             'Total Days': self.calculate_total_days(),
             'total_sell_value': self.calculate_total_sell_value(),
             'total_capital': self.calculate_total_capital(),
@@ -153,6 +195,18 @@ class StrategyAnalyzer:
             'delta_sell_capital_percent': self.calculate_delta_sell_capital_percent(),
             'Average Trading Frequency per Month': self.calculate_average_trading_frequency(),
             'stock_fee': self.calculate_stock_fee(),
+            'Top Best Stock': self.top_best_stock(1),  # Adjust the parameter based on your requirements
+            'Top Worst Stock': self.top_worst_stock(1),
         }
 
         return metrics
+
+    def get_report(self) -> None:
+        metrics = self.analyze_strategy()
+
+        print("Strategy Analysis Report:")
+        print("-" * 50)
+        
+        for key, value in metrics.items():
+            formatted_value = f"{value:.2f}" if isinstance(value, float) else value
+            print(f"{key}: {formatted_value}")
