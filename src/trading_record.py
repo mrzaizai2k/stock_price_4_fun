@@ -1,5 +1,3 @@
-
-
 import sys
 sys.path.append("")
 import os
@@ -15,7 +13,7 @@ warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 class WinLossAnalyzer:
     def __init__(self, win_loss_df_path:str = 'data/BaoCaoLaiLo_058C647873.csv',
-                  start_date = None, end_date = None, time_col:str = 'date'):
+                  start_date = None, end_date = None, time_col:str = 'time'):
         """
         Initialize the StrategyAnalyzer with trading data.
 
@@ -39,7 +37,7 @@ class WinLossAnalyzer:
 
     def load_data(self):
         df = pd.read_csv(self.df_path, encoding='latin1', skiprows=5)
-        column_order = ['date', 'sell_vol', 'sell_price', 'sell_value', 'capital_price', 'capital_value', 'dividend', 'win_loss_value', 'win_loss_percent']
+        column_order = ['time', 'sell_vol', 'sell_price', 'sell_value', 'capital_price', 'capital_value', 'dividend', 'win_loss_value', 'win_loss_percent']
         df.columns = column_order
         df = df.drop(df.index[-1])
         df = self.preprocess_data(df) 
@@ -47,19 +45,15 @@ class WinLossAnalyzer:
 
     def preprocess_data(self, df):
         df['win_loss_percent'] = df['win_loss_percent'].str.rstrip('%')
-        df['stock_name'] = df['date'].where(df['date'].str.len() == 3)
-        df['stock_name'] = df['stock_name'].ffill().astype('category')
-        df = df[df['date'].str.len() != 3]
-        df['date'] = pd.to_datetime(df['date'], format='%d/%m/%Y')
+        df['ticker'] = df['time'].where(df['time'].str.len() == 3)
+        df['ticker'] = df['ticker'].ffill().astype('category')
+        df = df[df['time'].str.len() != 3]
+        df['time'] = pd.to_datetime(df['time'], format='%d/%m/%Y')
         df = df.drop('dividend', axis=1)
         num_cols = ['sell_vol', 'sell_price', 'sell_value', 'capital_price',
                 'capital_value', 'win_loss_value', 'win_loss_percent']
-        df[num_cols] = df[num_cols].replace(',', '', regex=True)
+        df[num_cols] = df[num_cols].replace(',', '', regex=True).astype(float)
 
-        # Convert columns to numeric
-        df[num_cols] = df[num_cols].apply(pd.to_numeric)
-        for col in num_cols:
-            df[col] = df[col].astype(float)
         return df
 
         
@@ -165,15 +159,15 @@ class WinLossAnalyzer:
         fig.show()
 
     def top_best_stock(self, top_k: int = 3):
-        profitable_stocks = self.df[self.df['win_loss_value'] > 0].groupby('stock_name')['win_loss_value'].sum()
+        profitable_stocks = self.df[self.df['win_loss_value'] > 0].groupby('ticker')['win_loss_value'].sum()
         top_profitable_stocks = profitable_stocks.nlargest(top_k).reset_index()
-        return list(zip(top_profitable_stocks['stock_name'], top_profitable_stocks['win_loss_value']))
+        return list(zip(top_profitable_stocks['ticker'], top_profitable_stocks['win_loss_value']))
 
 
     def top_worst_stock(self, top_k: int = 3):
-        losing_stocks = self.df[self.df['win_loss_value'] < 0].groupby('stock_name')['win_loss_value'].sum()
+        losing_stocks = self.df[self.df['win_loss_value'] < 0].groupby('ticker')['win_loss_value'].sum()
         top_losing_stocks = losing_stocks.nsmallest(top_k).reset_index()
-        return list(zip(top_losing_stocks['stock_name'], top_losing_stocks['win_loss_value']))
+        return list(zip(top_losing_stocks['ticker'], top_losing_stocks['win_loss_value']))
 
 
     def analyze_strategy(self) ->dict:

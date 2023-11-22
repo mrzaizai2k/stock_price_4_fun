@@ -28,6 +28,18 @@ class Stock:
         elif len(self.symbol) == 3:
             self.type = 'stock'
 
+    def load_full_data(self, start_date:str = None, end_date:str = None, resolution:str ='1D'):
+        if end_date is None:
+            end_date = datetime.now().strftime("%Y-%m-%d")
+
+        if start_date is None:
+            start_date = "2017-01-01"
+
+        df =  stock_historical_data(symbol=self.symbol, start_date = start_date,
+                    end_date=end_date, resolution=resolution, type=self.type, beautify=True)
+        df = convert_data_type(df, [self.time_col], self.float_cols, self.cat_cols)
+        return df
+
     def load_current_data(self):
         current_date = datetime.now().strftime('%Y-%m-%d')
         start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=2)).strftime('%Y-%m-%d')

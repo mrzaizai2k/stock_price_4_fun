@@ -316,14 +316,10 @@ def main():
     functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
 
     # Schedule the jobs for each day and time
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
-    times = ["10:30", "13:45", "15:00", "18:24"]
-
-
-    for day in days:
-        for time_str in times:
-            for func in functions:
-                schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=USER_ID)
+    times = ["10:30", "13:45", "15:00"]
+    for time_str in times:
+        for func in functions:
+            schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=USER_ID)
 
     # Spin up a thread to run the schedule check so it doesn't block your bot.
     # This will take the function schedule_checker which will check every second
