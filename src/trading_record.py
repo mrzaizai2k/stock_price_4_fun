@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
 class WinLossAnalyzer:
     def __init__(self, win_loss_df_path:str = 'data/BaoCaoLaiLo_058C647873.csv',
-                  start_date = None, end_date = None, time_col:str = 'time'):
+                  start_date = None, end_date = None):
         """
         Initialize the StrategyAnalyzer with trading data.
 
@@ -30,8 +30,7 @@ class WinLossAnalyzer:
         self.num_cols = ['sell_vol', 'sell_price', 'sell_value', 'capital_price',
                 'capital_value', 'win_loss_value', 'win_loss_percent']
         
-
-        self.time_col = time_col
+        self.time_col = 'time'
         self.df = self.load_data()
 
         self.end_date = end_date
@@ -55,10 +54,10 @@ class WinLossAnalyzer:
 
     def _preprocess_data(self, df):
         df['win_loss_percent'] = df['win_loss_percent'].str.rstrip('%')
-        df['ticker'] = df['time'].where(df['time'].str.len() == 3)
+        df['ticker'] = df[self.time_col].where(df[self.time_col].str.len() == 3)
         df['ticker'] = df['ticker'].ffill().astype('category')
-        df = df[df['time'].str.len() != 3]
-        df['time'] = pd.to_datetime(df['time'], format='%d/%m/%Y')
+        df = df[df[self.time_col].str.len() != 3]
+        df[self.time_col] = pd.to_datetime(df[self.time_col], format='%d/%m/%Y')
         df = df.drop('dividend', axis=1)
         df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
         return df
@@ -213,7 +212,7 @@ class WinLossAnalyzer:
 
 class BuySellAnalyzer:
     def __init__(self, buy_sell_df_path:str = 'data/LichSuKhopLenh.csv',
-                  start_date = None, end_date = None, time_col:str = 'time'):
+                  start_date = None, end_date = None):
         """
         Initialize the StrategyAnalyzer with trading data.
 
@@ -221,8 +220,8 @@ class BuySellAnalyzer:
         - df (pd.DataFrame): DataFrame containing trading data.
         """
         self.buy_sell_df_path = buy_sell_df_path
-        self.time_col = time_col
         self.column_order = ['time', 'action', 'ticker', 'vol', 'price', 'value', 'tax_from_transfer', 'tax_from_capital', 'platform_fee']
+        self.time_col = 'time'
         self.num_cols = ['vol', 'price', 'value', 'tax_from_transfer', 'tax_from_capital', 'platform_fee']
 
         self.df = self.load_data()
@@ -246,12 +245,12 @@ class BuySellAnalyzer:
         return df
 
     def _preprocess_data(self, df):
-        df['time'].ffill(inplace=True)
+        df[self.time_col].ffill(inplace=True)
         df = df[df['ticker'].notna()]
         df = df.fillna(0)
         df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
         df['total_fee'] = df['tax_from_transfer'] + df['tax_from_capital'] + df['platform_fee']
-        df['time'] = pd.to_datetime(df['time'], format='%d/%m/%Y')
+        df[self.time_col] = pd.to_datetime(df[self.time_col], format='%d/%m/%Y')
         df['action'] = df['action'].map({'B\xa0n': 'sell', 'Mua': 'buy'}).astype('category') # change to Bán 
         return df
 
@@ -303,14 +302,14 @@ class BuySellAnalyzer:
 
     def _create_plot_dataset(self, symbol:str = 'SSI'):
         df_buy_sell = self.filter_stock_data(symbol=symbol)
-        df_buy_sell =df_buy_sell[['time','action','ticker','vol','price','value']]
+        df_buy_sell =df_buy_sell[[self.time_col,'action','ticker','vol','price','value']]
         df_stock = Stock(symbol).load_full_data(start_date = self.start_date, end_date=self.end_date)
-        df_merge = pd.merge(df_stock, df_buy_sell, how = 'outer', on = ['time', 'ticker'])
+        df_merge = pd.merge(df_stock, df_buy_sell, how = 'outer', on = [self.time_col, 'ticker'])
         return df_merge
 
     def _plot_candlestick_with_actions(self, dataframe, fig_size=(1000, 800)):
         # Create Candlestick chart
-        candlestick = go.Candlestick(x=dataframe['time'],
+        candlestick = go.Candlestick(x=dataframe[self.time_col],
                                     open=dataframe['open'],
                                     high=dataframe['high'],
                                     low=dataframe['low'],
@@ -319,7 +318,7 @@ class BuySellAnalyzer:
                                     decreasing=dict(line=dict(color='red')))
 
         # Create traces for buy and sell actions
-        buy_actions = go.Scatter(x=dataframe[dataframe['action'] == 'buy']['time'],
+        buy_actions = go.Scatter(x=dataframe[dataframe['action'] == 'buy'][self.time_col],
                                 y=dataframe[dataframe['action'] == 'buy']['price'],
                                 mode='markers',
                                 marker=dict(symbol='triangle-up',
@@ -327,7 +326,7 @@ class BuySellAnalyzer:
                                             color='black'),
                                 name='Buy Actions',)
 
-        sell_actions = go.Scatter(x=dataframe[dataframe['action'] == 'sell']['time'],
+        sell_actions = go.Scatter(x=dataframe[dataframe['action'] == 'sell'][self.time_col],
                                 y=dataframe[dataframe['action'] == 'sell']['price'],
                                 mode='markers',
                                 marker=dict(symbol='triangle-down',
