@@ -18,11 +18,16 @@ from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import *
 from src.support_resist import SupportResistFinding
 
+data_config_path = 'config/config.yaml'
+with open(data_config_path, 'r') as file:
+    data = yaml.safe_load(file)
 
-
+watchlist = data.get('my_watchlist', [])
+USER_ID = os.getenv('USER_ID')
 TELEBOT_API= os.getenv('TELEBOT_API')
 # print('key', TELEBOT_API)
 bot = telebot.TeleBot(TELEBOT_API)
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -290,6 +295,52 @@ def warningsnr(watchlist, user_id, tolerance_percent:float = 1.0):  # Pass the m
         return bot.send_message(user_id, f'Support/Resistance warning for stocks:\n{report_message}')
 
 
+@bot.message_handler(commands=['watchlist'])
+def handle_watchlist(message):
+    markup = types.ReplyKeyboardMarkup(row_width=1, one_time_keyboard=True)
+    watch_button = types.KeyboardButton('Watch')
+    add_button = types.KeyboardButton('Add')
+    remove_button = types.KeyboardButton('Remove')
+    markup.add(watch_button, add_button, remove_button)
+
+    bot.send_message(message.chat.id, "Choose an action:", reply_markup=markup)
+    bot.register_next_step_handler(message, process_button_click)
+
+def process_button_click(message):
+    user_action = message.text.lower()
+
+    if user_action == 'watch':
+        bot.send_message(message.chat.id, f"Your watchlist: {watchlist}")
+    elif user_action == 'add':
+        bot.send_message(message.chat.id, "Enter the stock name to add:")
+        bot.register_next_step_handler(message, process_add_stock)
+    elif user_action == 'remove':
+        bot.send_message(message.chat.id, "Enter the stock name to remove:")
+        bot.register_next_step_handler(message, process_remove_stock)
+    else:
+        bot.send_message(message.chat.id, "Invalid option. Please choose a valid action.")
+
+def process_add_stock(message):
+    symbol = message.text.upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+    
+    watchlist.append(symbol)
+    bot.send_message(message.chat.id, f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
+
+def process_remove_stock(message):
+    symbol = message.text.upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+
+    if symbol in watchlist:
+        watchlist.remove(symbol)
+        bot.send_message(message.chat.id, f"{symbol} removed from your watchlist. Updated watchlist: {watchlist}")
+    else:
+        bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
+
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
@@ -305,14 +356,6 @@ def schedule_checker():
 
 
 def main():
-
-    data_config_path = 'config/config.yaml'
-    with open(data_config_path, 'r') as file:
-        data = yaml.safe_load(file)
-
-    watchlist = data.get('my_watchlist', [])
-    USER_ID = os.getenv('USER_ID')
-
     functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
 
     # Schedule the jobs for each day and time
