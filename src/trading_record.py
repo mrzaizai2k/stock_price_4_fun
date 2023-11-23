@@ -1,3 +1,5 @@
+
+
 import sys
 sys.path.append("")
 import os
@@ -6,7 +8,8 @@ pd.set_option('display.max_columns', None)
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-
+from src.stock_class import Stock
+from src.utils import validate_symbol
 import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
@@ -20,43 +23,46 @@ class WinLossAnalyzer:
         Parameters:
         - df (pd.DataFrame): DataFrame containing trading data.
         """
-        self.df_path = win_loss_df_path
-        self.df = self.load_data()
+        self.win_loss_df_path = win_loss_df_path
+        self.column_order = ['time', 'sell_vol', 'sell_price', 'sell_value', 'capital_price', 
+                             'capital_value', 'dividend', 'win_loss_value', 'win_loss_percent']
+        
+        self.num_cols = ['sell_vol', 'sell_price', 'sell_value', 'capital_price',
+                'capital_value', 'win_loss_value', 'win_loss_percent']
+        
+
         self.time_col = time_col
+        self.df = self.load_data()
 
         self.end_date = end_date
         if self.end_date is None:
-            self.end_date = self.df[self.time_col].max()
+            self.end_date = self.df[self.time_col].max().strftime("%Y-%m-%d")
 
         self.start_date = start_date
         if self.start_date is None:
-            self.start_date = self.df[self.time_col].min()
+            self.start_date = self.df[self.time_col].min().strftime("%Y-%m-%d")
         
-        self.df = self.filter_data()
+        if self.start_date is not None or self.end_date is not None:
+            self.df = self.filter_data()
 
 
     def load_data(self):
-        df = pd.read_csv(self.df_path, encoding='latin1', skiprows=5)
-        column_order = ['time', 'sell_vol', 'sell_price', 'sell_value', 'capital_price', 'capital_value', 'dividend', 'win_loss_value', 'win_loss_percent']
-        df.columns = column_order
+        df = pd.read_csv(self.win_loss_df_path, encoding='latin1', skiprows=5)
+        df.columns = self.column_order
         df = df.drop(df.index[-1])
-        df = self.preprocess_data(df) 
+        df = self._preprocess_data(df) 
         return df
 
-    def preprocess_data(self, df):
+    def _preprocess_data(self, df):
         df['win_loss_percent'] = df['win_loss_percent'].str.rstrip('%')
         df['ticker'] = df['time'].where(df['time'].str.len() == 3)
         df['ticker'] = df['ticker'].ffill().astype('category')
         df = df[df['time'].str.len() != 3]
         df['time'] = pd.to_datetime(df['time'], format='%d/%m/%Y')
         df = df.drop('dividend', axis=1)
-        num_cols = ['sell_vol', 'sell_price', 'sell_value', 'capital_price',
-                'capital_value', 'win_loss_value', 'win_loss_percent']
-        df[num_cols] = df[num_cols].replace(',', '', regex=True).astype(float)
-
+        df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
         return df
 
-        
 
     def filter_data(self):
         filtered_data = self.df[
@@ -204,3 +210,145 @@ class WinLossAnalyzer:
         for key, value in metrics.items():
             formatted_value = f"{value:.2f}" if isinstance(value, float) else value
             print(f"{key}: {formatted_value}")
+
+class BuySellAnalyzer:
+    def __init__(self, buy_sell_df_path:str = 'data/LichSuKhopLenh.csv',
+                  start_date = None, end_date = None, time_col:str = 'time'):
+        """
+        Initialize the StrategyAnalyzer with trading data.
+
+        Parameters:
+        - df (pd.DataFrame): DataFrame containing trading data.
+        """
+        self.buy_sell_df_path = buy_sell_df_path
+        self.time_col = time_col
+        self.column_order = ['time', 'action', 'ticker', 'vol', 'price', 'value', 'tax_from_transfer', 'tax_from_capital', 'platform_fee']
+        self.num_cols = ['vol', 'price', 'value', 'tax_from_transfer', 'tax_from_capital', 'platform_fee']
+
+        self.df = self.load_data()
+
+        self.end_date = end_date
+        if self.end_date is None:
+            self.end_date = self.df[self.time_col].max().strftime("%Y-%m-%d")
+
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = self.df[self.time_col].min().strftime("%Y-%m-%d")
+        
+        if self.start_date is not None or self.end_date is not None:
+            self.df = self.filter_data()
+
+
+    def load_data(self):
+        df = pd.read_csv(self.buy_sell_df_path, encoding='latin1', skiprows=1)
+        df.columns = self.column_order
+        df = self._preprocess_data(df)
+        return df
+
+    def _preprocess_data(self, df):
+        df['time'].ffill(inplace=True)
+        df = df[df['ticker'].notna()]
+        df = df.fillna(0)
+        df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
+        df['total_fee'] = df['tax_from_transfer'] + df['tax_from_capital'] + df['platform_fee']
+        df['time'] = pd.to_datetime(df['time'], format='%d/%m/%Y')
+        df['action'] = df['action'].map({'B\xa0n': 'sell', 'Mua': 'buy'}).astype('category') # change to Bán 
+        return df
+
+    def filter_data(self):
+        filtered_data = self.df[
+            (self.df[self.time_col] >= self.start_date) & (self.df[self.time_col] <= self.end_date)
+        ]
+        return filtered_data
+    
+    def sum_total_fee(self):
+        return self.df['total_fee'].sum()
+    
+    def sum_tax(self):
+        tax  = self.df['tax_from_transfer'].sum() + self.df['tax_from_capital'].sum()
+        return tax
+    
+    def sum_platform_fee(self):
+        return self.df['platform_fee'].sum()
+    
+    def trading_frequency(self, symbol:str = None):
+        if symbol is not None:
+            df = self.filter_stock_data(symbol=symbol)
+        else:
+            df = self.df.copy()
+        num_trading = len(df)
+        total_months = (df[self.time_col].max() - df[self.time_col].min()).days/30
+        if total_months == 0:
+            total_months = 1 
+        frequency = int(num_trading/total_months)
+        return frequency
+    
+    def filter_stock_data(self, symbol:str = 'SSI'):
+        symbol = symbol.upper()
+
+        if not validate_symbol(symbol):
+            raise ValueError(f'Invalid symbol {symbol}')
+
+        if symbol not in self.df['ticker'].tolist():
+            raise ValueError(f'No Data on {symbol}')
+            
+        stock_data = self.df[self.df['ticker'] == symbol]
+        return stock_data
+
+    
+    def plot_buy_sell_of_stock(self, symbol:str = 'SSI'):
+        df_merge = self._create_plot_dataset(symbol)
+        self._plot_candlestick_with_actions(df_merge)
+
+
+    def _create_plot_dataset(self, symbol:str = 'SSI'):
+        df_buy_sell = self.filter_stock_data(symbol=symbol)
+        df_buy_sell =df_buy_sell[['time','action','ticker','vol','price','value']]
+        df_stock = Stock(symbol).load_full_data(start_date = self.start_date, end_date=self.end_date)
+        df_merge = pd.merge(df_stock, df_buy_sell, how = 'outer', on = ['time', 'ticker'])
+        return df_merge
+
+    def _plot_candlestick_with_actions(self, dataframe, fig_size=(1000, 800)):
+        # Create Candlestick chart
+        candlestick = go.Candlestick(x=dataframe['time'],
+                                    open=dataframe['open'],
+                                    high=dataframe['high'],
+                                    low=dataframe['low'],
+                                    close=dataframe['close'],
+                                    increasing=dict(line=dict(color='green')),
+                                    decreasing=dict(line=dict(color='red')))
+
+        # Create traces for buy and sell actions
+        buy_actions = go.Scatter(x=dataframe[dataframe['action'] == 'buy']['time'],
+                                y=dataframe[dataframe['action'] == 'buy']['price'],
+                                mode='markers',
+                                marker=dict(symbol='triangle-up',
+                                            size=12,
+                                            color='black'),
+                                name='Buy Actions',)
+
+        sell_actions = go.Scatter(x=dataframe[dataframe['action'] == 'sell']['time'],
+                                y=dataframe[dataframe['action'] == 'sell']['price'],
+                                mode='markers',
+                                marker=dict(symbol='triangle-down',
+                                            size=12,
+                                            color='brown'),
+                                name='Sell Actions',)
+
+        # Create layout
+        layout = go.Layout(title='Candlestick Chart with Buy and Sell Actions',
+                        xaxis=dict(title='Date'),
+                        yaxis=dict(title='Price'),
+                        template='seaborn',
+                        plot_bgcolor='#F6F5F5',
+                        paper_bgcolor='#F6F5F5',)
+
+        # Create figure
+        fig = go.Figure(data=[candlestick, buy_actions, sell_actions], layout=layout)
+
+        # Update figure size
+        fig.update_layout(width=fig_size[0], height=fig_size[1])
+
+        # Show the plot
+        fig.show()
+
