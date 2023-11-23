@@ -1,1 +1,10 @@
-my_watchlist: ['GEX', 'VIX', 'HHV', 'BSR','FTS','SHS','HAH', 'GVR', 'PDR']
+my_watchlist:
+- GEX
+- VIX
+- HHV
+- BSR
+- FTS
+- SHS
+- PDR
+- CTR
+- HAG

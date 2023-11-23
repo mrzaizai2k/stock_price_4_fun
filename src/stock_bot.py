@@ -23,6 +23,12 @@ with open(data_config_path, 'r') as file:
     data = yaml.safe_load(file)
 
 watchlist = data.get('my_watchlist', [])
+
+def save_watchlist(watchlist, data_config_path = 'config/config.yaml'):
+    data = {'my_watchlist': watchlist}
+    with open(data_config_path, 'w') as file:
+        yaml.dump(data, file)
+
 USER_ID = os.getenv('USER_ID')
 TELEBOT_API= os.getenv('TELEBOT_API')
 # print('key', TELEBOT_API)
@@ -45,6 +51,7 @@ def help(message):
     bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
     bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
+    bot.send_message(message.chat.id, "\n/watchlist: See/change watch list")
 
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
@@ -312,10 +319,10 @@ def process_button_click(message):
     if user_action == 'watch':
         bot.send_message(message.chat.id, f"Your watchlist: {watchlist}")
     elif user_action == 'add':
-        bot.send_message(message.chat.id, "Enter the stock name to add:")
+        bot.send_message(message.chat.id, "Enter the stock name to add:\n VD: VIX")
         bot.register_next_step_handler(message, process_add_stock)
     elif user_action == 'remove':
-        bot.send_message(message.chat.id, "Enter the stock name to remove:")
+        bot.send_message(message.chat.id, "Enter the stock name to remove:\n VD: VIX")
         bot.register_next_step_handler(message, process_remove_stock)
     else:
         bot.send_message(message.chat.id, "Invalid option. Please choose a valid action.")
@@ -327,6 +334,7 @@ def process_add_stock(message):
         return 
     
     watchlist.append(symbol)
+    save_watchlist(watchlist)
     bot.send_message(message.chat.id, f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
 
 def process_remove_stock(message):
@@ -337,6 +345,7 @@ def process_remove_stock(message):
 
     if symbol in watchlist:
         watchlist.remove(symbol)
+        save_watchlist(watchlist)
         bot.send_message(message.chat.id, f"{symbol} removed from your watchlist. Updated watchlist: {watchlist}")
     else:
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")

@@ -136,10 +136,6 @@ class WinLossAnalyzer:
         self.df.drop(['year_month'], axis=1, inplace=True) 
         return average_trading_frequency
 
-    def calculate_stock_fee(self):
-        stock_fee = ((0.088 + 0.1) / 100) * self.df['capital_value'].sum()
-        return stock_fee
-
     def plot_return(self, col='win_loss_value', figsize=(800, 600)):
 
         daily_aggregated = self.df.groupby(self.time_col).agg({col: 'sum'}).reset_index()
@@ -193,7 +189,6 @@ class WinLossAnalyzer:
             'delta_sell_capital': self.calculate_delta_sell_capital(),
             'delta_sell_capital_percent': self.calculate_delta_sell_capital_percent(),
             'Average Trading Frequency per Month': self.calculate_average_trading_frequency(),
-            'stock_fee': self.calculate_stock_fee(),
             'Top Best Stock': self.top_best_stock(1),  # Adjust the parameter based on your requirements
             'Top Worst Stock': self.top_worst_stock(1),
         }
@@ -251,7 +246,7 @@ class BuySellAnalyzer:
         df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
         df['total_fee'] = df['tax_from_transfer'] + df['tax_from_capital'] + df['platform_fee']
         df[self.time_col] = pd.to_datetime(df[self.time_col], format='%d/%m/%Y')
-        df['action'] = df['action'].map({'B\xa0n': 'sell', 'Mua': 'buy'}).astype('category') # change to Bán 
+        df['action'] = df['action'].map({'Bán': 'sell', 'B\xa0n': 'sell', 'Mua': 'buy'}).astype('category') # change to Bán 
         return df
 
     def filter_data(self):
@@ -324,7 +319,9 @@ class BuySellAnalyzer:
                                 marker=dict(symbol='triangle-up',
                                             size=12,
                                             color='black'),
-                                name='Buy Actions',)
+                                name='Buy Actions',
+                                text=dataframe[dataframe['action'] == 'buy']['vol'],  # Display volume information
+                                )
 
         sell_actions = go.Scatter(x=dataframe[dataframe['action'] == 'sell'][self.time_col],
                                 y=dataframe[dataframe['action'] == 'sell']['price'],
@@ -332,7 +329,9 @@ class BuySellAnalyzer:
                                 marker=dict(symbol='triangle-down',
                                             size=12,
                                             color='brown'),
-                                name='Sell Actions',)
+                                name='Sell Actions',
+                                text = dataframe[dataframe['action'] == 'sell']['vol'],
+                                )
 
         # Create layout
         layout = go.Layout(title='Candlestick Chart with Buy and Sell Actions',
