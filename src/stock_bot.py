@@ -25,7 +25,12 @@ with open(data_config_path, 'r') as file:
 watchlist = data.get('my_watchlist', [])
 
 def save_watchlist(watchlist, data_config_path = 'config/config.yaml'):
-    data = {'my_watchlist': watchlist}
+    with open(data_config_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    # Update only the 'my_watchlist' field
+    data['my_watchlist'] = watchlist
+
     with open(data_config_path, 'w') as file:
         yaml.dump(data, file)
 
@@ -365,10 +370,14 @@ def schedule_checker():
 
 
 def main():
-    functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
+    data_config_path = 'config/config.yaml'
+    with open(data_config_path, 'r') as file:
+        data = yaml.safe_load(file)
 
+    times = data.get('times', [])    
+    functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
+    
     # Schedule the jobs for each day and time
-    times = ["10:30", "13:45", "15:00"]
     for time_str in times:
         for func in functions:
             schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=USER_ID)
