@@ -210,7 +210,7 @@ def motif_pre_filter()->list[str]:
     return df['ticker'].to_list()
 
 
-def find_best_motifs(file_path = 'memory/best_motif_stocks.csv',start_date = None, end_date = None,
+def find_best_motifs(start_date = None, end_date = None,
                     dimension_cols:list=['close', 'volume'],
                     nn_idx_threshold:int=5, 
                     distance_threshold:float = 5, 
