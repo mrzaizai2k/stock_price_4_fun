@@ -213,8 +213,8 @@ def find_PBT_stocks(file_path="memory/paybacktime.csv"):
     return pass_ticker
 
 def main():
-    pass_ticker = find_PBT_stocks()
+    pass_ticker = find_PBT_stocks(file_path="memory/paybacktime.csv")
     print(pass_ticker)
-    
+
 if __name__ =="__main__":
     main()

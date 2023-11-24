@@ -27,3 +27,12 @@ jobs:
 
     - name: Run pay back time test
       run: python src/PayBackTime.py
+
+    - name: Run motif test
+      run: python src/motif.py
+
+    - name: Run Indicator test
+      run: python src/Indicators.py
+
+    - name: Run support resist test
+      run: python src/support_resist.py

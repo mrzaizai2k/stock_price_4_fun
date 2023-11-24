@@ -229,3 +229,16 @@ class BigDayWarning(Stock):
         if current_vol >= self.calculate_avg_volume() and current_price < threshold_price:
             return True
         return False
+
+
+def main():
+    symbol = "SSI"
+    macd = MACD(symbol)
+    a = macd.calculate_macd()
+    pvma = PricevsMA(symbol)
+    print(pvma.is_cross_up(offset=3))
+    bigday = BigDayWarning(symbol)
+    print(bigday.is_big_decrease())
+
+if __name__ =="__main__":
+    main()

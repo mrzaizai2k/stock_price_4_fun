@@ -165,3 +165,13 @@ class SupportResistFinding(Stock):
         closest_resistance = min(resistance_candidates, default=None)
 
         return [closest_support, closest_resistance]
+
+def main():
+
+    symbol = "VIX"
+    sr_finding = SupportResistFinding(symbol, accuracy=7, percent_threshold=3)
+    levels = sr_finding.calculate_support_resistance_band()
+    print(len(levels))
+
+if __name__ =="__main__":
+    main()

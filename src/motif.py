@@ -235,3 +235,10 @@ def find_best_motifs(start_date = None, end_date = None,
             results_dict[stock_name] = [pattern_start_date, pattern_end_date, distance]
 
     return results_dict
+
+def main():
+    pass_ticker = find_best_motifs()
+    print(pass_ticker)
+
+if __name__ =="__main__":
+    main()
