@@ -211,3 +211,10 @@ def find_PBT_stocks(file_path="memory/paybacktime.csv"):
             pass_ticker.append(pbt_generator.symbol)
     print(f"PBT stocks: {pass_ticker}")
     return pass_ticker
+
+def main():
+    pass_ticker = find_PBT_stocks()
+    print(pass_ticker)
+    
+if __name__ =="__main__":
+    main()

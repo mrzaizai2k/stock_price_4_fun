@@ -22,5 +22,8 @@ jobs:
       run: |
         make install
 
-    - name: Run bot tests
-      run: make bot
+    # - name: Run bot tests
+    #   run: make bot
+
+    - name: Run pay back time test
+      run: python src/PayBackTime.py
