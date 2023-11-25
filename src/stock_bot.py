@@ -22,17 +22,7 @@ data_config_path = 'config/config.yaml'
 with open(data_config_path, 'r') as file:
     data = yaml.safe_load(file)
 
-watchlist = data.get('my_watchlist', [])
-
-def save_watchlist(watchlist, data_config_path = 'config/config.yaml'):
-    with open(data_config_path, 'r') as file:
-        data = yaml.safe_load(file)
-
-    # Update only the 'my_watchlist' field
-    data['my_watchlist'] = watchlist
-
-    with open(data_config_path, 'w') as file:
-        yaml.dump(data, file)
+user_data_path = data.get('user_data_path', None)
 
 USER_ID = os.getenv('USER_ID')
 TELEBOT_API= os.getenv('TELEBOT_API')
@@ -240,9 +230,9 @@ def warning_macd(watchlist, user_id):  # Pass the message parameter
     for symbol in watchlist:
         macd = MACD(symbol)
         if macd.is_cross_up(offset=3):
-            warning_report.append(f'{symbol}: Crossed up')
+            warning_report.append(f'{symbol}: Crossed up 🔼')
         elif macd.is_cross_down(offset=3):
-            warning_report.append(f'{symbol}: Crossed down')
+            warning_report.append(f'{symbol}: Crossed down 🔻')
     if warning_report:
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
@@ -256,9 +246,9 @@ def warningbigday(watchlist, user_id):  # Pass the message parameter
     for symbol in watchlist:
         bigday = BigDayWarning(symbol, percent_diff=3)
         if bigday.is_big_increase():
-            warning_report.append(f'Powerful UP for {symbol}')
+            warning_report.append(f'Powerful UP for {symbol} 💹')
         if bigday.is_big_decrease():
-            warning_report.append(f'Powerful DOWN for {symbol}')
+            warning_report.append(f'Powerful DOWN for {symbol} 🆘')
 
     if warning_report:
         # If there are FTD warnings, send a report
@@ -322,6 +312,8 @@ def process_button_click(message):
     user_action = message.text.lower()
 
     if user_action == 'watch':
+        user_db= UserDatabase(user_data_path=user_data_path)
+        watchlist = user_db.get_watch_list(user_id=message.chat.id)
         bot.send_message(message.chat.id, f"Your watchlist: {watchlist}")
     elif user_action == 'add':
         bot.send_message(message.chat.id, "Enter the stock name to add:\n VD: VIX")
@@ -337,9 +329,11 @@ def process_add_stock(message):
     if not validate_symbol(symbol):
         bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
         return 
-    
+
+    user_db= UserDatabase(user_data_path=user_data_path)    
+    watchlist = user_db.get_watch_list(user_id=message.chat.id)
     watchlist.append(symbol)
-    save_watchlist(watchlist)
+    user_db.save_watch_list(user_id=message.chat.id, watch_list=watchlist)
     bot.send_message(message.chat.id, f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
 
 def process_remove_stock(message):
@@ -348,9 +342,12 @@ def process_remove_stock(message):
         bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
         return 
 
+    user_db= UserDatabase(user_data_path=user_data_path)
+    watchlist = user_db.get_watch_list(user_id=message.chat.id)
+
     if symbol in watchlist:
         watchlist.remove(symbol)
-        save_watchlist(watchlist)
+        user_db.save_watch_list(user_id=message.chat.id, watch_list=watchlist)
         bot.send_message(message.chat.id, f"{symbol} removed from your watchlist. Updated watchlist: {watchlist}")
     else:
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
@@ -376,11 +373,16 @@ def main():
 
     times = data.get('times', [])    
     functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
-    
+
+    user_db = UserDatabase(user_data_path=user_data_path)
+    user_list = user_db.get_users_for_warning()
+
     # Schedule the jobs for each day and time
     for time_str in times:
         for func in functions:
-            schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=USER_ID)
+            for user in user_list:
+                watchlist = user_db.get_watch_list(user_id=user)
+                schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=user)
 
     # Spin up a thread to run the schedule check so it doesn't block your bot.
     # This will take the function schedule_checker which will check every second

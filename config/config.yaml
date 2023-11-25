@@ -1,15 +1,4 @@
-my_watchlist:
-- GEX
-- VIX
-- HHV
-- BSR
-- FTS
-- SHS
-- PDR
-- CTR
-- NKG
-- HAH
-- VNINDEX
+user_data_path: data/user_db.csv
 times:
 - '10:30'
 - '13:45'
