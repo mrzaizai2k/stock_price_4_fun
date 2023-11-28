@@ -1,6 +1,6 @@
 install:
 #	# python -m venv venv
-#	# venv/bin/activate
+#	source ./venv/bin/activate
 	pip install -r setup.txt
 freeze:
 	pip freeze > setup.txt
