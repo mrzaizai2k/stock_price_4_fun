@@ -232,15 +232,15 @@ class BuySellAnalyzer:
         if self.start_date is not None or self.end_date is not None:
             self.df = self.filter_data()
 
-
     def load_data(self):
-        df = pd.read_csv(self.buy_sell_df_path, encoding='latin1', skiprows=1)
+        df = pd.read_csv(self.buy_sell_df_path)
         df.columns = self.column_order
         df = self._preprocess_data(df)
         return df
 
     def _preprocess_data(self, df):
         df[self.time_col].ffill(inplace=True)
+        df = df[(df['action'] == 'Mua') | (df['action'] == 'Bán') ]
         df = df[df['ticker'].notna()]
         df = df.fillna(0)
         df[self.num_cols] = df[self.num_cols].replace(',', '', regex=True).astype(float)
