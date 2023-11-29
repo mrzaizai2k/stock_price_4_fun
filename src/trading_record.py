@@ -13,6 +13,21 @@ from src.utils import validate_symbol
 import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
+import selenium 
+import shutil
+import time
+
+from datetime import datetime,timedelta
+from typing import Literal, Optional
+
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 class WinLossAnalyzer:
     def __init__(self, win_loss_df_path:str = 'data/BaoCaoLaiLo_058C647873.csv',
@@ -46,7 +61,7 @@ class WinLossAnalyzer:
 
 
     def load_data(self):
-        df = pd.read_csv(self.win_loss_df_path, encoding='latin1', skiprows=5)
+        df = pd.read_csv(self.win_loss_df_path, skiprows=1)
         df.columns = self.column_order
         df = df.drop(df.index[-1])
         df = self._preprocess_data(df) 
@@ -349,4 +364,138 @@ class BuySellAnalyzer:
 
         # Show the plot
         fig.show()
+
+class TradeScraper:
+    
+    def __init__(self, username, password, show_UI = False):
+        self.username = username
+        self.password = password
+
+        chrome_options = Options()
+        chrome_options.add_argument("--no-sandbox")
+        # homedir = os.path.expanduser("~")
+        # webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
+
+        self.show_UI = show_UI
+        if self.show_UI:
+            chrome_options.add_argument("--headless") # Ensure GUI is off
+            self.driver = webdriver.Chrome()
+        else:
+            self.driver = webdriver.Chrome(options=chrome_options)
+        
+        self.source_folder = os.path.expanduser("~/Downloads")  # the default Downloads folder
+        self.destination_folder = "D:\Project\stock_predict\data"  # Specify your destination folder
+        self.signin()
+        # self.wait = WebDriverWait(self.driver, 10)
+
+    def signin(self):
+        self.driver.get("https://accounts.fpts.com.vn/Login?href=eztrade")
+        username_input = self.driver.find_element(By.ID, 'txtAccountNo')
+        password_input = self.driver.find_element(By.ID, "txtPassword")
+        username_input.clear()
+        username_input.send_keys(self.username)
+        password_input.send_keys(self.password)
+        password_input.send_keys(Keys.RETURN)
+
+
+    def convert_date_for_calendar(self, start_date, end_date):
+
+        current_date = datetime.now().strftime("%d/%m/%Y")
+
+        if end_date is None:
+            end_date = current_date
+
+        if start_date is None:
+            start_date = (
+                datetime.strptime(current_date, "%d/%m/%Y") - timedelta(days=170)
+            ).strftime( "%d/%m/%Y")
+
+        return start_date, end_date
+
+    def handle_calendar_text(self, start_date_element, end_date_element, start_date, end_date):
+        start_date, end_date = self.convert_date_for_calendar(start_date, end_date)
+        for date_element, date_value in zip([start_date_element, end_date_element], [start_date, end_date]):
+            date_element.clear()
+            date_element.click()
+            date_element.send_keys(Keys.CONTROL, "a")
+            date_element.send_keys(Keys.BACKSPACE)
+            date_element.send_keys(date_value)
+
+    def scrape_fpts_trading_log(self, start_date:Optional[str] = None, end_date:Optional[str] = None,
+                             report_type:Literal['TradeLog', 'reportprofitloss'] = 'TradeLog'):
+
+        
+        report_url = f"https://eztrade.fpts.com.vn/report/{report_type}"
+        
+        self.driver.get(report_url)
+   
+        start_date_input = self.driver.find_element(By.ID,'txtDateFrom')
+        end_date_input = self.driver.find_element(By.ID,'txtDateTo')
+
+        self.handle_calendar_text(start_date_input, end_date_input, start_date, end_date)
+
+        #Click the update btn
+        update_button = self.driver.find_element(By.ID, "btnUpdate")
+        update_button.click()
+        # download the report
+        time.sleep(1)
+        download_button = self.driver.find_element(By.ID, "imgExcel_CA")
+        download_button.click()
+
+        report_types_mapping = {
+            'TradeLog': f'LichSuKhopLenh_{self.username}',
+            'reportprofitloss': f'BaoCaoLaiLo_{self.username}'
+        }
+        download_file_prefix = report_types_mapping.get(report_type)    
+        time.sleep(10)
+        src_file_path = os.path.join(self.source_folder, f'{download_file_prefix}.xls')
+        self.convert_xls_csv(src_file_path=src_file_path)
+        self.move_downloaded_file_to_db(file_name =  f'{download_file_prefix}.csv')
+        
+
+        
+    def move_downloaded_file_to_db(self, file_name):
+        source_path = os.path.join(self.source_folder, file_name)
+        destination_path = os.path.join(self.destination_folder, file_name)
+
+        if os.path.exists(destination_path):
+            os.remove(destination_path)
+
+        time.sleep(7)
+        # shutil.move(source_path, self.destination_folder)
+        attempt= 0
+        max_attempts = 3
+        
+        while attempt < max_attempts:
+            try:
+                shutil.move(source_path, self.destination_folder)
+                print("File moved successfully.")
+                break
+            except Exception as e:
+                attempt += 1
+                print(f"Error moving file: {e}")
+                time.sleep(7)
+        else:
+            print(f"Failed to move the file after {max_attempts} retries.")
+            return
+
+
+    def convert_xls_csv(self, src_file_path ="data/LichSuKhopLenh_058C647873.xls"):
+        '''
+        Convert file xls to csv
+        1. Convert xls -> html
+        2. Read html file
+        3. Convert html -> csv
+        '''
+        
+        file_name, _ = os.path.splitext(src_file_path)
+        html_file_name = file_name + ".html"
+        shutil.move(src_file_path, html_file_name)
+        df = pd.read_html(html_file_name)[0]
+        df.to_csv(file_name + '.csv', index=False)
+        os.remove(html_file_name)
+
+    def close_broser(self):
+        self.driver.quit()
+
 
