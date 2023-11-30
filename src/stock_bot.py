@@ -12,11 +12,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # from telegram.ext.filters import Filters 
-from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.utils import *
+from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.motif import MotifMatching, find_best_motifs
-from src.Indicators import *
+from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
+from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
 
 data_config_path = 'config/config.yaml'
 with open(data_config_path, 'r') as file:
@@ -47,9 +48,11 @@ def help(message):
     bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
     bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
     bot.send_message(message.chat.id, "\n/watchlist: See/change watch list")
+    bot.send_message(message.chat.id, "\n/winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)")
+    bot.send_message(message.chat.id, "\n/buysellanalyze: Picture of my Buy sell for a stock (FPTS data)")
 
 
-@bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr'])
+@bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr','buysellanalyze'])
 def ask_for_symbol(message):
     # Ask for the stock symbol
     markup = types.ForceReply(selective = False)
@@ -62,6 +65,8 @@ def ask_for_symbol(message):
         bot.register_next_step_handler(message, get_paybacktime)
     elif message.text == '/snr':
         bot.register_next_step_handler(message, get_support_resistance)
+    elif message.text == '/buysellanalyze':
+        bot.register_next_step_handler(message, get_buysell_analyze)
     else: # message.text in ['/mulpattern', '/pattern']:
         bot.register_next_step_handler(message, ask_pattern_stock, message.text)
 
@@ -128,6 +133,23 @@ def get_paybacktime(message):
     
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+
+def get_buysell_analyze(message):
+    symbol = message.text.upper()
+    if not validate_symbol(symbol):
+        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+        return 
+    
+    buy_sell_df_path = data.get('buy_sell_df_path', None)
+    buysell_analyzer = BuySellAnalyzer(buy_sell_df_path=buy_sell_df_path)
+    image_path = buysell_analyzer.plot_and_save_buy_sell_of_stock(symbol=symbol)
+
+    # Send the image
+    with open(image_path, 'rb') as photo:
+        bot.send_photo(message.chat.id, photo)
+
+    bot.send_message(message.chat.id, f'This is your Buy/Sell for stock {symbol}')
+    os.remove(image_path)
 
 def get_support_resistance(message):
     # Get the symbol from the user's message
@@ -223,6 +245,15 @@ def findpbt(message):
         report += f"- Distance: {distance:.3f}\n\n"
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+
+@bot.message_handler(commands=['winlossanalyze'])
+def analyze_winloss(message):
+
+    win_loss_df_path = data.get('win_loss_df_path', None)
+    winloss_analyzer = WinLossAnalyzer(win_loss_df_path=win_loss_df_path)
+    report = winloss_analyzer.get_report()
+    bot.send_message(message.chat.id, report)
+
 
 def warning_macd(watchlist, user_id):  # Pass the message parameter
 

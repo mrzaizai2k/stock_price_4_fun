@@ -5,3 +5,4 @@ config/config.py
 *.csv
 /data
 /venv
+*png

@@ -1,4 +1,6 @@
 user_data_path: data/user_db.csv
+win_loss_df_path: data/BaoCaoLaiLo_058C647873.csv
+buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
 times:
 - '10:30'
 - '13:45'

@@ -8,6 +8,7 @@ pd.set_option('display.max_columns', None)
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import plotly.io as pio
 from src.stock_class import Stock
 from src.utils import validate_symbol
 import warnings
@@ -212,13 +213,16 @@ class WinLossAnalyzer:
 
     def get_report(self) -> None:
         metrics = self.analyze_strategy()
-
-        print("Strategy Analysis Report:")
-        print("-" * 50)
+        report = ""
+        # report += f"\nCurrent EPS: {self.get_current_eps()}\n"
+        report += f"\nStrategy Analysis Report:"
+        report += f"\n---------------"
         
         for key, value in metrics.items():
             formatted_value = f"{value:.2f}" if isinstance(value, float) else value
-            print(f"{key}: {formatted_value}")
+            report += f"\n- {key}: {formatted_value}"
+        print(report)
+        return report
 
 class BuySellAnalyzer:
     def __init__(self, buy_sell_df_path:str = 'data/LichSuKhopLenh.csv',
@@ -309,6 +313,12 @@ class BuySellAnalyzer:
         df_merge = self._create_plot_dataset(symbol)
         self._plot_candlestick_with_actions(df_merge)
 
+    def plot_and_save_buy_sell_of_stock(self, symbol:str = 'SSI'):
+        df_merge = self._create_plot_dataset(symbol)
+        save_path = f'data/{symbol}_buysell_trading.png'
+        self._plot_candlestick_with_actions(df_merge, save_path = save_path, fig_size=(1600, 900))
+        return save_path
+
 
     def _create_plot_dataset(self, symbol:str = 'SSI'):
         df_buy_sell = self.filter_stock_data(symbol=symbol)
@@ -317,8 +327,9 @@ class BuySellAnalyzer:
         df_merge = pd.merge(df_stock, df_buy_sell, how = 'outer', on = [self.time_col, 'ticker'])
         return df_merge
 
-    def _plot_candlestick_with_actions(self, dataframe, fig_size=(1000, 800)):
+    def _plot_candlestick_with_actions(self, dataframe, save_path:Optional[str] , fig_size=(1000, 800)):
         # Create Candlestick chart
+        symbol = dataframe['ticker']
         candlestick = go.Candlestick(x=dataframe[self.time_col],
                                     open=dataframe['open'],
                                     high=dataframe['high'],
@@ -361,30 +372,38 @@ class BuySellAnalyzer:
 
         # Update figure size
         fig.update_layout(width=fig_size[0], height=fig_size[1])
-
+        
+        if save_path:
+            pio.write_image(fig, save_path)
         # Show the plot
         fig.show()
 
+        
 class TradeScraper:
+    '''
+    Scape Trading report from FPTS 
+    How to run selenium on linux
+    https://cloudbytes.dev/snippets/run-selenium-and-chrome-on-wsl2#:~:text=With%20Selenium%20libraries%2C%20Python%20can,using%20Python%20and%20Selenium%20webdriver.
     
+    '''
     def __init__(self, username, password, show_UI = False):
         self.username = username
         self.password = password
 
         chrome_options = Options()
         chrome_options.add_argument("--no-sandbox")
-        # homedir = os.path.expanduser("~")
-        # webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
+        homedir = os.path.expanduser("~")
+        webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
 
         self.show_UI = show_UI
         if self.show_UI:
-            chrome_options.add_argument("--headless") # Ensure GUI is off
-            self.driver = webdriver.Chrome()
+            self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
         else:
-            self.driver = webdriver.Chrome(options=chrome_options)
+            chrome_options.add_argument("--headless") # Ensure GUI is off
+            self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
         
-        self.source_folder = os.path.expanduser("~/Downloads")  # the default Downloads folder
-        self.destination_folder = "D:\Project\stock_predict\data"  # Specify your destination folder
+        self.source_folder = os.path.expanduser("./") # the default Downloads folder
+        self.destination_folder = "data"  # Specify your destination folder
         self.signin()
         # self.wait = WebDriverWait(self.driver, 10)
 
@@ -497,5 +516,3 @@ class TradeScraper:
 
     def close_broser(self):
         self.driver.quit()
-
-
