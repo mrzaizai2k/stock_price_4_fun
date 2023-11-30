@@ -15,14 +15,14 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 ## Available Commands
 1. `/start`: Initializes the bot and provides a welcome message.
 2. `/help`: Displays a list of available commands and their descriptions.
-3. `/pbt + symbol`: Calculates the payback time for a specific stock.
-4. `/snr + symbol`: Finds the closest support and resistance levels for a stock.
+3. `/pbt`: Calculates the payback time for a specific stock.
+4. `/snr`: Finds the closest support and resistance levels for a stock.
 5. `/findpbt`: Identifies stocks with favorable payback times.
 6. `/findmyfav`: Recommends stocks based on specified criteria.
-7. `/risk + symbol`: Calculates the number of stocks you can buy with a given loss/trade percentage and maximum loss/capital percentage.
-8. `/rate + symbol`: Provides a general rating for a stock.
-9. `/mulpattern + symbol + date (YYYY-mm-dd)`: Finds patterns of a stock on multiple dimensions (close, volume).
-10. `/pattern + symbol + date (YYYY-mm-dd)`: Finds patterns of a stock based on closing prices.
+7. `/risk`: Calculates the number of stocks you can buy with a given loss/trade percentage and maximum loss/capital percentage.
+8. `/rate`: Provides a general rating for a stock.
+9. `/mulpattern`: Finds patterns of a stock on multiple dimensions (close, volume).
+10. `/pattern`: Finds patterns of a stock based on closing prices.
 11. `/findbestmotif`: Identifies the best motifs across all stocks.
 12. `/buysellanalyze`: Picture of my Buy/Sell of a stock (FPTS data)
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
