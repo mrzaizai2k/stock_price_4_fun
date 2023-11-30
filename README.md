@@ -8,6 +8,7 @@
 3. [Warning Price](#warning-price)
 3. [Database](#database)
 3. [Example Uses](#example-uses)
+3. [To-Do List](#to-do-list)
 
 ## Introduction
 Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist you with various stock-related tasks and analyses. Whether you want to calculate the payback time for a stock, find support and resistance levels, or receive warnings about specific market conditions, this bot has you covered.
@@ -120,6 +121,16 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 ## Example Uses
 
 Explore practical implementations and demonstrations of the chatbot's functions in the `notebook` folder. These examples showcase real-world scenarios, illustrating how the chatbot can be effectively utilized for stock market monitoring.
+
+## To-Do List
+
+- [ ] **Stock Prediction with TFT Model**
+
+- [ ] **Automated Data Scraping**
+
+- [ ] **User_ID Encryption**
+
+- [ ] **Back Testing Bot**
 
 
 Note: Ensure that you have Python installed on your machine and the necessary permissions to install packages and run scripts.
