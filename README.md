@@ -125,15 +125,20 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 Explore practical implementations and demonstrations of the chatbot's functions in the `notebook` folder. These examples showcase real-world scenarios, illustrating how the chatbot can be effectively utilized for stock market monitoring.
 
 ## Open VScode tunnel 
+
 As to this [link](https://code.visualstudio.com/docs/remote/tunnels#:~:text=In%20the%20VS%20Code%20Account,prompted%20to%20log%20into%20GitHub), you need to first set up the tunnel in your code
 
       curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
 
       tar -xf vscode_cli.tar.gz
 
-Then use this command
+Then use this command in CLI
 
       ./code tunnel
+
+Or in the `stock_boy.py`
+
+      result = subprocess.run(command, check=True, text=True)
 
 ## To-Do List
 
