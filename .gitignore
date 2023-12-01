@@ -6,3 +6,5 @@ config/config.py
 /data
 /venv
 *png
+*.gz
+code

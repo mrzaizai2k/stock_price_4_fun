@@ -3,8 +3,10 @@ sys.path.append("")
 import os 
 import yaml
 import schedule
+import threading
 from threading import Thread
 from time import sleep
+import subprocess
 
 import telebot
 from telebot import types
@@ -50,6 +52,7 @@ def help(message):
     bot.send_message(message.chat.id, "\n/watchlist: See/change watch list")
     bot.send_message(message.chat.id, "\n/winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)")
     bot.send_message(message.chat.id, "\n/buysellanalyze: Picture of my Buy sell for a stock (FPTS data)")
+    bot.send_message(message.chat.id, "\n/remote: Open remote tunnel to vscode on my latop")
 
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr','buysellanalyze'])
@@ -384,11 +387,15 @@ def process_remove_stock(message):
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
 
 
-# Define the function to handle all other messages
-@bot.message_handler(func=lambda message: True)
-def echo(message):
-    response_message = "Apologies, I didn't understand that command. 😕\nPlease type /help to see the list of available commands."
-    bot.send_message(message.chat.id, response_message)
+def run_vscode_tunnel(message):
+    command = ['./code', 'tunnel']
+    bot.reply_to(message, f"VS Code remote tunnel opened!: https://vscode.dev/tunnel/bao_msi/root/code_Bao/stock_price_4_fun")
+    result = subprocess.run(command, check=True, text=True)
+
+@bot.message_handler(commands=['remote'])
+def open_vscode_tunnel(message):
+    bot.reply_to(message, f"VS Code remote tunnel Opening...")
+    Thread(target=run_vscode_tunnel, args=(message,)).start() 
 
 
 def schedule_checker():
@@ -396,6 +403,11 @@ def schedule_checker():
         schedule.run_pending()
         sleep(1)
 
+# Define the function to handle all other messages
+@bot.message_handler(func=lambda message: True)
+def echo(message):
+    response_message = "Apologies, I didn't understand that command. 😕\nPlease type /help to see the list of available commands."
+    bot.send_message(message.chat.id, response_message)
 
 def main():
     data_config_path = 'config/config.yaml'

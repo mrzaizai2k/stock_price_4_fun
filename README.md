@@ -8,6 +8,7 @@
 3. [Warning Price](#warning-price)
 3. [Database](#database)
 3. [Example Uses](#example-uses)
+3. [Open VScode tunnel](#open-vscode-tunnel)
 3. [To-Do List](#to-do-list)
 
 ## Introduction
@@ -29,6 +30,7 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 14. `/watchlist`: See/change your watch list
 15. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
+15. `/remote`: Open remote tunnel to vscode on my latop
 
 ## How to Use
 1. Start a command with a forward slash ("/") followed by the desired command.
@@ -121,6 +123,17 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 ## Example Uses
 
 Explore practical implementations and demonstrations of the chatbot's functions in the `notebook` folder. These examples showcase real-world scenarios, illustrating how the chatbot can be effectively utilized for stock market monitoring.
+
+## Open VScode tunnel 
+As to this [link](https://code.visualstudio.com/docs/remote/tunnels#:~:text=In%20the%20VS%20Code%20Account,prompted%20to%20log%20into%20GitHub), you need to first set up the tunnel in your code
+
+      curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
+
+      tar -xf vscode_cli.tar.gz
+
+Then use this command
+
+      ./code tunnel
 
 ## To-Do List
 
