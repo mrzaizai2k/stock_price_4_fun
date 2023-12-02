@@ -21,27 +21,16 @@ from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
 
-data_config_path = 'config/config.yaml'
-with open(data_config_path, 'r') as file:
-    data = yaml.safe_load(file)
+
+
+data = config_parser(data_config_path = 'config/config.yaml')
 
 user_data_path = data.get('user_data_path', None)
-
-USER_ID = os.getenv('USER_ID')
+TRADE_USER= os.getenv('TRADE_USER')
+TRADE_PASS= os.getenv('TRADE_PASS')
 TELEBOT_API= os.getenv('TELEBOT_API')
-# print('key', TELEBOT_API)
 bot = telebot.TeleBot(TELEBOT_API)
 
-def validate_symbol_decorator(func):
-    @wraps(func)
-    def wrapper(message, command):
-        symbol = message.text.upper()
-        if not validate_symbol(symbol):
-            bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-            return
-        return func(message, command, symbol)
-    
-    return wrapper
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -83,12 +72,9 @@ def ask_for_symbol(message):
     else: # message.text in ['/mulpattern', '/pattern']:
         bot.register_next_step_handler(message, ask_pattern_stock, message.text)
 
-
+@validate_symbol_decorator(bot)
 def ask_pattern_stock(message, command):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
     markup = types.ForceReply(selective = False)
     bot.reply_to(message, "Please enter the start_date (YYYY-mm-dd):", reply_markup = markup)
 
@@ -131,26 +117,22 @@ def find_similar_pattern_multi_dimension(message, symbol):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
+@validate_symbol_decorator(bot)
 def get_paybacktime(message):
+    pbt_params = data.get('pbt_params')
     # Get the symbol from the user's message
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
-    
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     # Create the PayBackTime object and get the report
-    pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
+    pbt_generator = PayBackTime(symbol=symbol, report_range=pbt_params[0], window_size = pbt_params[1])
     report = pbt_generator.get_report()
     
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
+@validate_symbol_decorator(bot)
 def get_buysell_analyze(message):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
     
     buy_sell_df_path = data.get('buy_sell_df_path', None)
     buysell_analyzer = BuySellAnalyzer(buy_sell_df_path=buy_sell_df_path)
@@ -163,12 +145,10 @@ def get_buysell_analyze(message):
     bot.send_message(message.chat.id, f'This is your Buy/Sell for stock {symbol}')
     os.remove(image_path)
 
+@validate_symbol_decorator(bot)
 def get_support_resistance(message):
     # Get the symbol from the user's message
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
   
     # Create the PayBackTime object and get the report
     sr_finding = SupportResistFinding(symbol=symbol)
@@ -179,7 +159,7 @@ def get_support_resistance(message):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
-@validate_symbol_decorator
+@validate_symbol_decorator(bot)
 def calculate_risk(message):
     symbol = message.text.upper()
     pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
@@ -191,13 +171,9 @@ def calculate_risk(message):
     mess += f'The fee is: 0.188% -> {((0.188/100) * stock_price*num_stocks)/1_000} (nghìn VND)\n'
     bot.send_message(message.chat.id, mess)
 
-
+@validate_symbol_decorator(bot)
 def rate(message):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
-    
     if len(symbol) > 3: # Its not for Index
         bot.send_message(message.chat.id, 'This function can just be used for stocks, not index')
         return
@@ -300,9 +276,11 @@ def warningpricevsma(watchlist, user_id):  # Pass the message parameter
 
     for symbol in watchlist:
         pvma = PricevsMA(symbol)
-        if pvma.is_cross_up(offset=3):
+        pvma_offset = data.get('pvma_offset')
+
+        if pvma.is_cross_up(offset=pvma_offset):
             warning_report.append(f'{symbol}: Crossed up')
-        elif pvma.is_cross_down(offset=3):
+        elif pvma.is_cross_down(offset=pvma_offset):
             warning_report.append(f'{symbol}: Crossed down')
 
     if warning_report:
@@ -311,8 +289,9 @@ def warningpricevsma(watchlist, user_id):  # Pass the message parameter
         return bot.send_message(user_id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
 
 
-def warningsnr(watchlist, user_id, tolerance_percent:float = 1.0):  # Pass the message parameter
+def warningsnr(watchlist, user_id):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
+    tolerance_percent = data.get('tolerance_percent') 
     for symbol in watchlist:
         sr_finding = SupportResistFinding(symbol=symbol)
         current_price = sr_finding.get_current_price()
@@ -363,23 +342,18 @@ def process_button_click(message):
     else:
         bot.send_message(message.chat.id, "Invalid option. Please choose a valid action.")
 
+@validate_symbol_decorator(bot)
 def process_add_stock(message):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
-
     user_db= UserDatabase(user_data_path=user_data_path)    
     watchlist = user_db.get_watch_list(user_id=message.chat.id)
     watchlist.append(symbol)
     user_db.save_watch_list(user_id=message.chat.id, watch_list=watchlist)
     bot.send_message(message.chat.id, f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
 
+@validate_symbol_decorator(bot)
 def process_remove_stock(message):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
 
     user_db= UserDatabase(user_data_path=user_data_path)
     watchlist = user_db.get_watch_list(user_id=message.chat.id)
@@ -415,13 +389,9 @@ def echo(message):
     bot.send_message(message.chat.id, response_message)
 
 def main():
-    data_config_path = 'config/config.yaml'
-    with open(data_config_path, 'r') as file:
-        data = yaml.safe_load(file)
 
-    times = data.get('times', [])    
+    times = data.get('times', []) 
     functions = [warning_macd, warningpricevsma, warningsnr, warningbigday]
-
     user_db = UserDatabase(user_data_path=user_data_path)
     user_list = user_db.get_users_for_warning()
 
@@ -432,10 +402,10 @@ def main():
                 watchlist = user_db.get_watch_list(user_id=user)
                 schedule.every().day.at(f"{time_str}").do(func, watchlist=watchlist, user_id=user)
 
-    # Spin up a thread to run the schedule check so it doesn't block your bot.
-    # This will take the function schedule_checker which will check every second
-    # to see if the scheduled job needs to be ran.
+    schedule.every().day.at(data.get('scape_trading_data_time')).do(scape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
+
     Thread(target=schedule_checker).start() 
+
 
     while True:
         try:
