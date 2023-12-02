@@ -28,16 +28,18 @@ from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
 def validate_symbol_decorator(bot):
     def decorator(func):
         @wraps(func)
-        def wrapper(message, command):
+        def wrapper(message, command=None):
             symbol = message.text.upper()
             if not validate_symbol(symbol):
                 bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
                 return
-            return func(message, command, symbol)
+            return func(message, command) if command else func(message)
         
         return wrapper
     
     return decorator
+
+
 
 def run_vscode_tunnel(bot, message):
     command = ['./code', 'tunnel']

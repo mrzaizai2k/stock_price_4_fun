@@ -30,7 +30,7 @@ import statsmodels as sm
 from scipy.stats import shapiro, skew
 
 from typing import Literal
-from src.utils import *
+from src.Utils.utils import *
 from src.stock_class import Stock
 
 class SupportResistFinding(Stock):

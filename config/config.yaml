@@ -4,11 +4,15 @@ buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
 
 pvma_offset: 3 #PricevsMA
 tolerance_percent: 1 #for support and resistance
-pbt_params: ('yearly', 10) # (report_type, window_size)
+
+pbt_params: 
+- yearly # report_type
+- 10 # window_size)
 
 times:
 - '10:30'
 - '13:45'
 - '15:00'
+- '15:44'
 
-scape_trading_data_time: '22:00'
+scape_trading_data_time: '15:45'

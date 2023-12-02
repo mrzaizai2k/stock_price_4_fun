@@ -13,7 +13,7 @@ import urllib3
 
 urllib3.disable_warnings()
 
-from src.utils import *
+from src.Utils.utils import *
 from src.stock_class import Stock
 
 

@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 from src.stock_class import Stock
-from src.utils import validate_symbol
+from src.Utils.utils import validate_symbol
 import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
@@ -516,3 +516,10 @@ class TradeScraper:
 
     def close_broser(self):
         self.driver.quit()
+
+
+def scrape_trading_data(user_name, password):
+    scraper = TradeScraper(user_name, password)
+    scraper.scrape_fpts_trading_log(report_type='TradeLog')
+    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')
+    scraper.close_broser() 

@@ -11,7 +11,7 @@ import schedule
 import time
 import yaml
 from functools import wraps
-from src.trading_record import TradeScraper
+
 
 def filter_stocks(param):
     df = stock_screening_insights(param, size=1700, drop_lang='vi')
@@ -108,12 +108,6 @@ def config_parser(data_config_path = 'config/config.yaml'):
     with open(data_config_path, 'r') as file:
         data = yaml.safe_load(file)
     return data
-
-def scape_trading_data(user_name, password):
-    scraper = TradeScraper(user_name, password)
-    scraper.scrape_fpts_trading_log(report_type='TradeLog')
-    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')
-    scraper.close_broser() 
 
 
 class UserDatabase:

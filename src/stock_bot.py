@@ -20,7 +20,7 @@ from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
-from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
+from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper, scrape_trading_data
 
 
 
@@ -324,7 +324,7 @@ def echo(message):
 def main():
 
     warning_stock()
-    schedule.every().day.at(data.get('scape_trading_data_time')).do(scape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
+    schedule.every().day.at(data.get('scape_trading_data_time')).do(scrape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
     Thread(target=schedule_checker).start() 
 
 

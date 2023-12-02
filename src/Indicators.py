@@ -14,7 +14,7 @@ import urllib3
 urllib3.disable_warnings()
 
 from src.stock_class import Stock
-from src.utils import *
+from src.Utils.utils import *
 
 class MACD(Stock):
     def __init__(self, symbol:str = 'MWG', short_window=12, long_window=26, signal_window=9,
