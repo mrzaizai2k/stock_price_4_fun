@@ -1,6 +1,8 @@
 user_data_path: data/user_db.csv
 win_loss_df_path: data/BaoCaoLaiLo_058C647873.csv
 buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
+asset_data_path: data/BaoCaoTaiSan_058C647873.csv
+
 
 pvma_offset: 3 #PricevsMA
 tolerance_percent: 1 #for support and resistance
@@ -15,4 +17,4 @@ times:
 - '15:00'
 - '15:44'
 
-scape_trading_data_time: '15:45'
+scape_trading_data_time: '22:59'

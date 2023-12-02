@@ -30,6 +30,22 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+
+
+class AssetAnalyzer:
+    def __init__(self, file_path:str = 'data/BaoCaoTaiSan_058C647873.csv'):
+        """
+        Initialize the DataFrameReader with the file path.
+        :param file_path: Path to the DataFrame file.
+        """
+        self.file_path = file_path
+        self.data_frame = pd.read_csv(self.file_path)  
+
+    def read_capital_value(self):
+        value = float(self.data_frame.iat[2, 1])
+        return value
+
+        
 class WinLossAnalyzer:
     def __init__(self, win_loss_df_path:str = 'data/BaoCaoLaiLo_058C647873.csv',
                   start_date = None, end_date = None):
@@ -441,21 +457,23 @@ class TradeScraper:
             date_element.send_keys(date_value)
 
     def scrape_fpts_trading_log(self, start_date:Optional[str] = None, end_date:Optional[str] = None,
-                             report_type:Literal['TradeLog', 'reportprofitloss'] = 'TradeLog'):
+                             report_type:Literal['TradeLog', 'reportprofitloss','AssetReport2'] = 'TradeLog'):
 
         
         report_url = f"https://eztrade.fpts.com.vn/report/{report_type}"
-        
+
         self.driver.get(report_url)
-   
-        start_date_input = self.driver.find_element(By.ID,'txtDateFrom')
-        end_date_input = self.driver.find_element(By.ID,'txtDateTo')
 
-        self.handle_calendar_text(start_date_input, end_date_input, start_date, end_date)
+        if report_type in ['TradeLog', 'reportprofitloss']:
+            start_date_input = self.driver.find_element(By.ID,'txtDateFrom')
+            end_date_input = self.driver.find_element(By.ID,'txtDateTo')
 
-        #Click the update btn
-        update_button = self.driver.find_element(By.ID, "btnUpdate")
-        update_button.click()
+            self.handle_calendar_text(start_date_input, end_date_input, start_date, end_date)
+
+            #Click the update btn
+            update_button = self.driver.find_element(By.ID, "btnUpdate")
+            update_button.click()
+
         # download the report
         time.sleep(1)
         download_button = self.driver.find_element(By.ID, "imgExcel_CA")
@@ -463,7 +481,8 @@ class TradeScraper:
 
         report_types_mapping = {
             'TradeLog': f'LichSuKhopLenh_{self.username}',
-            'reportprofitloss': f'BaoCaoLaiLo_{self.username}'
+            'reportprofitloss': f'BaoCaoLaiLo_{self.username}',
+            'AssetReport2': f'BaoCaoTaiSan_{self.username}'
         }
         download_file_prefix = report_types_mapping.get(report_type)    
         time.sleep(10)

@@ -17,10 +17,11 @@ load_dotenv()
 from Utils.utils import *
 from Utils.bot_utils import warning_macd, warningpricevsma, warningsnr, warningbigday, validate_symbol_decorator, run_vscode_tunnel
 from src.PayBackTime import PayBackTime, find_PBT_stocks
+from src.stock_class import Stock
 from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
-from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper, scrape_trading_data
+from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
 
 
 
@@ -163,12 +164,19 @@ def get_support_resistance(message):
 @validate_symbol_decorator(bot)
 def calculate_risk(message):
     symbol = message.text.upper()
-    pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
-    stock_price = pbt_generator.get_current_price()
-    num_stocks = calculate_stocks_to_buy(stock_price)
+
+    stock_generator = Stock(symbol=symbol)
+    stock_price = stock_generator.get_current_price()
+
+    asset_data_path = data.get('asset_data_path')
+    data_frame_reader = AssetAnalyzer(file_path=asset_data_path)
+    capital_value = data_frame_reader.read_capital_value()
+
+    num_stocks = calculate_stocks_to_buy(stock_price, capital = capital_value)
     mess = ""
     mess += f"You can buy {num_stocks} stocks at the price of {stock_price} each\n"
-    mess += f'Total price: {stock_price*num_stocks/1_000_000} (triệu VND)\n'
+    mess += f"Your Captial: {capital_value/1_000_000:.2f} (triệu VND)\n"
+    mess += f'Total price: {stock_price*num_stocks/1_000_000:.2f} (triệu VND)\n'
     mess += f'The fee is: 0.188% -> {((0.188/100) * stock_price*num_stocks)/1_000} (nghìn VND)\n'
     bot.send_message(message.chat.id, mess)
 
