@@ -5,6 +5,10 @@ import os
 from vnstock import *
 from dotenv import load_dotenv
 load_dotenv()
+
+import subprocess
+import schedule
+import time
 import yaml
 from functools import wraps
 from src.trading_record import TradeScraper
@@ -37,19 +41,10 @@ def convert_data_type(df, time_cols=[], float_cols=[], cat_cols=[]):
 def validate_symbol(symbol):
     return (symbol in listing_companies(live=True).ticker.tolist()) or (symbol in ['VNINDEX','VN30'])
 
-def validate_symbol_decorator(bot):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(message, command):
-            symbol = message.text.upper()
-            if not validate_symbol(symbol):
-                bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-                return
-            return func(message, command, symbol)
-        
-        return wrapper
-    
-    return decorator
+def schedule_checker():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 def memoization(func):
     def wrapper(file_path, *args, **kwargs):
