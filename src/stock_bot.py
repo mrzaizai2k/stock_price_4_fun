@@ -32,6 +32,16 @@ TELEBOT_API= os.getenv('TELEBOT_API')
 # print('key', TELEBOT_API)
 bot = telebot.TeleBot(TELEBOT_API)
 
+def validate_symbol_decorator(func):
+    @wraps(func)
+    def wrapper(message, command):
+        symbol = message.text.upper()
+        if not validate_symbol(symbol):
+            bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+            return
+        return func(message, command, symbol)
+    
+    return wrapper
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -103,7 +113,6 @@ def find_similar_pattern(message, symbol):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
-# @bot.message_handler(commands=['mulpattern'])
 def find_similar_pattern_multi_dimension(message, symbol):
 
     start_date = message.text # %Y-%m-%d
@@ -170,12 +179,9 @@ def get_support_resistance(message):
     # Send the report to the user
     bot.send_message(message.chat.id, report)
 
+@validate_symbol_decorator
 def calculate_risk(message):
     symbol = message.text.upper()
-    if not validate_symbol(symbol):
-        bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
-        return 
-
     pbt_generator = PayBackTime(symbol=symbol, report_range='yearly', window_size=10)
     stock_price = pbt_generator.get_current_price()
     num_stocks = calculate_stocks_to_buy(stock_price)
@@ -183,7 +189,6 @@ def calculate_risk(message):
     mess += f"You can buy {num_stocks} stocks at the price of {stock_price} each\n"
     mess += f'Total price: {stock_price*num_stocks/1_000_000} (triệu VND)\n'
     mess += f'The fee is: 0.188% -> {((0.188/100) * stock_price*num_stocks)/1_000} (nghìn VND)\n'
-
     bot.send_message(message.chat.id, mess)
 
 
