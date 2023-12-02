@@ -6,6 +6,8 @@ from vnstock import *
 from dotenv import load_dotenv
 load_dotenv()
 import yaml
+from functools import wraps
+from src.trading_record import TradeScraper
 
 def filter_stocks(param):
     df = stock_screening_insights(param, size=1700, drop_lang='vi')
@@ -35,6 +37,19 @@ def convert_data_type(df, time_cols=[], float_cols=[], cat_cols=[]):
 def validate_symbol(symbol):
     return (symbol in listing_companies(live=True).ticker.tolist()) or (symbol in ['VNINDEX','VN30'])
 
+def validate_symbol_decorator(bot):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(message, command):
+            symbol = message.text.upper()
+            if not validate_symbol(symbol):
+                bot.send_message(message.chat.id, f'Sorry! There is no stock {symbol}')
+                return
+            return func(message, command, symbol)
+        
+        return wrapper
+    
+    return decorator
 
 def memoization(func):
     def wrapper(file_path, *args, **kwargs):
@@ -94,6 +109,16 @@ def check_path(path):
             os.makedirs(path)
             print(f"Create new path: {path}")
 
+def config_parser(data_config_path = 'config/config.yaml'):
+    with open(data_config_path, 'r') as file:
+        data = yaml.safe_load(file)
+    return data
+
+def scape_trading_data(user_name, password):
+    scraper = TradeScraper(user_name, password)
+    scraper.scrape_fpts_trading_log(report_type='TradeLog')
+    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')
+    scraper.close_broser() 
 
 
 class UserDatabase:
