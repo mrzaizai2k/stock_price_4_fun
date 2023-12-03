@@ -13,9 +13,6 @@ from src.Utils.utils import *
 from src.stock_class import Stock
 
 
-
-
-
 class PayBackTime(Stock):
     def __init__(self, symbol: str = 'GEX',
                  report_range: Literal['yearly', 'quarterly'] = 'yearly',
@@ -213,8 +210,8 @@ def find_PBT_stocks(file_path="memory/paybacktime.csv"):
     return pass_ticker
 
 def main():
-    pass_ticker = find_PBT_stocks(file_path="memory/paybacktime.csv")
-    print(pass_ticker)
+    pbt_generator = PayBackTime(symbol='ACB', report_range='yearly', window_size=10)
+    pbt_generator.get_report()
 
 if __name__ =="__main__":
     main()

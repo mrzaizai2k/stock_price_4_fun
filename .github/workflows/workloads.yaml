@@ -36,3 +36,6 @@ jobs:
 
     - name: Run support resist test
       run: python src/support_resist.py
+    
+    - name: Run summarize_text
+      run: 	python src/summarize_text.py

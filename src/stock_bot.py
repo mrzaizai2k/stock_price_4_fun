@@ -22,6 +22,7 @@ from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
+from src.summarize_text import SpeechSummaryProcessor
 
 
 
@@ -54,6 +55,7 @@ def help(message):
     bot.send_message(message.chat.id, "\n/winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)")
     bot.send_message(message.chat.id, "\n/buysellanalyze: Picture of my Buy sell for a stock (FPTS data)")
     bot.send_message(message.chat.id, "\n/remote: Open remote tunnel to vscode on my latop")
+    bot.send_message(message.chat.id, "\n Summarize idea from Audio or Voice")
 
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr','buysellanalyze'])
@@ -321,7 +323,24 @@ def warning_stock():
                 else:
                     schedule.every().day.at(f"{time_str}").do(func, bot=bot , watchlist=watchlist, user_id=user)
 
-            
+@bot.message_handler(content_types=['audio','voice'])
+def summarize_sound(message):
+    bot.send_message(message.chat.id, "Proccessing...")
+    file_id = message.audio.file_id if message.content_type == 'audio' else message.voice.file_id
+
+    file_info = bot.get_file(file_id)
+    downloaded_file = bot.download_file(file_info.file_path)
+    file_path = f'data/{file_id}.mp3'
+
+    with open(file_path, 'wb') as new_file:
+        new_file.write(downloaded_file)
+
+    speech_to_text = SpeechSummaryProcessor(audio_path=file_path)
+    text = speech_to_text.generate_speech_to_text()
+    text = f"Here's your note:\n {text}"
+    bot.reply_to(message, text)
+    os.remove(file_path)
+
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
