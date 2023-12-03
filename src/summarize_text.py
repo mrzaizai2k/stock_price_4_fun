@@ -1,8 +1,37 @@
 import torch
 import whisper
-from googletrans import Translator
+import requests
+import re
+import time
+import random
+import urllib3
+
+urllib3.disable_warnings()
 from typing import Literal
 
+class GoogleTranslator:
+    def __init__(self):
+        pass
+
+    def translate(self, text, to_lang):
+        url = 'https://translate.googleapis.com/translate_a/single'
+
+        params = {
+        'client': 'gtx',
+        'sl': 'auto',
+        'tl': to_lang,
+        # 'hl': from_lang,
+        'dt': ['t', 'bd'],
+        'dj': '1',
+        'source': 'popup5',
+        'q': text
+        }
+        translated_text = ""
+        data = requests.get(url, params=params, verify=False).json()
+        sentences = data['sentences']
+        for sentence in sentences:
+            translated_text += f"{sentence['trans']}\n"
+        return translated_text
 
 class SpeechSummaryProcessor:
     '''
@@ -12,7 +41,8 @@ class SpeechSummaryProcessor:
     audio =  # Make sure you upload the audio file (mp3,wav,m4a) into the session storage!
     model = "base" #possible options are 'tiny', 'base', 'small', 'medium', and 'large'
     '''
-    def __init__(self, audio_path: str, whisper_model: Literal['base', 'small'] = 'base'):
+    def __init__(self, audio_path: str, whisper_model: Literal['base', 'small'] = 'base', 
+                 translator = GoogleTranslator()):
         # Step 1: Initialize the SpeechToTextProcessor
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print('Device', self.device)
@@ -21,6 +51,7 @@ class SpeechSummaryProcessor:
         # Step 2: Load and preprocess the audio
         self.audio_path = audio_path
         self.audio = whisper.load_audio(audio_path)
+        self.translator = translator
 
     def transcibe_text_from_sound(self):
         # Step 3: Perform speech-to-text conversion
@@ -37,14 +68,13 @@ class SpeechSummaryProcessor:
 
         for idx, segment in enumerate(segments):
             segment_text = segment['text']
-            segmented_text += f'\n{idx + 1}: {segment_text}'
+            segmented_text += f'{idx + 1}: {segment_text}\n'
         return segmented_text
 
-    def translate_to_english(self, text, dest='en'):
+    def translate_to_english(self, text, to_lang='en'):
         # Step 5: Translate the text to English
-        translator = Translator()
-        translation = translator.translate(text, src='auto', dest=dest)
-        return translation.text
+        translated_text = self.translator.translate(text,to_lang=to_lang)
+        return translated_text
 
     def generate_speech_to_text(self):
         # Step 6: Perform the overall processing and translation
