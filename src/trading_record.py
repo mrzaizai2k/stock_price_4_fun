@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 from src.stock_class import Stock
-from src.Utils.utils import validate_symbol
+from src.Utils.utils import validate_symbol, check_path
 import warnings
 warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 
@@ -402,7 +402,7 @@ class TradeScraper:
     https://cloudbytes.dev/snippets/run-selenium-and-chrome-on-wsl2#:~:text=With%20Selenium%20libraries%2C%20Python%20can,using%20Python%20and%20Selenium%20webdriver.
     
     '''
-    def __init__(self, username, password, show_UI = False):
+    def __init__(self, username, password, show_UI = False, destination_folder:str = "data"):
         self.username = username
         self.password = password
 
@@ -419,7 +419,8 @@ class TradeScraper:
             self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
         
         self.source_folder = os.path.expanduser("./") # the default Downloads folder
-        self.destination_folder = "data"  # Specify your destination folder
+        self.destination_folder = destination_folder # Specify your destination folder
+        check_path(self.destination_folder)
         self.signin()
         # self.wait = WebDriverWait(self.driver, 10)
 
