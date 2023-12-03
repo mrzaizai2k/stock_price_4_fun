@@ -20,7 +20,11 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt update
+        sudo apt install -y ffmpeg  # Specify '-y' for automatic yes to prompts
         make install
+        curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
+        tar -xf vscode_cli.tar.gz
 
     # - name: Run bot tests
     #   run: make bot
