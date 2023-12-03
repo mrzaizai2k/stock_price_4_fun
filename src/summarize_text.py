@@ -88,6 +88,6 @@ class SpeechSummaryProcessor:
 
 
 if __name__ == "__main__":
-    speech_to_text = SpeechSummaryProcessor(audio_path='data/sample_voice.m4a')
+    speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
     text = speech_to_text.generate_speech_to_text()
     print ('Text', text)
