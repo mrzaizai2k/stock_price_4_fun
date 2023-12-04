@@ -343,7 +343,7 @@ class BuySellAnalyzer:
         df_merge = pd.merge(df_stock, df_buy_sell, how = 'outer', on = [self.time_col, 'ticker'])
         return df_merge
 
-    def _plot_candlestick_with_actions(self, dataframe, save_path:Optional[str] , fig_size=(1000, 800)):
+    def _plot_candlestick_with_actions(self, dataframe, save_path:str=None , fig_size=(1000, 800)):
         # Create Candlestick chart
         symbol = dataframe['ticker']
         candlestick = go.Candlestick(x=dataframe[self.time_col],
@@ -389,7 +389,7 @@ class BuySellAnalyzer:
         # Update figure size
         fig.update_layout(width=fig_size[0], height=fig_size[1])
         
-        if save_path:
+        if save_path is not None:
             pio.write_image(fig, save_path)
         # Show the plot
         fig.show()
@@ -541,5 +541,7 @@ class TradeScraper:
 def scrape_trading_data(user_name, password):
     scraper = TradeScraper(user_name, password)
     scraper.scrape_fpts_trading_log(report_type='TradeLog')
-    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')
+    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')    
+    scraper.scrape_fpts_trading_log(report_type='AssetReport2')
+
     scraper.close_broser() 

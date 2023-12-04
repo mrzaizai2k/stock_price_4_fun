@@ -140,15 +140,23 @@ Or in the `stock_boy.py`
 
       result = subprocess.run(command, check=True, text=True)
 
+## Summarize Sound
+
+
+
+
 ## To-Do List
 
 - [ ] **Stock Prediction with TFT Model**
 
-- [ ] **Automated Data Scraping**
+- [x] **Automated Data Scraping**
 
 - [ ] **User_ID Encryption**
 
 - [ ] **Back Testing Bot**
+
+- [x] **Summarize voice**
+
 
 
 Note: Ensure that you have Python installed on your machine and the necessary permissions to install packages and run scripts.
