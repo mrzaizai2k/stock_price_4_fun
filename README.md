@@ -134,7 +134,7 @@ Then use this command in CLI
 
       ./code tunnel
 
-Or in the `stock_boy.py`
+Or in the `src/stock_bot.py`
 
       result = subprocess.run(command, check=True, text=True)
 
