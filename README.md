@@ -7,8 +7,9 @@
 3. [How to Set Up the Bot](#how-to-set-up-the-bot)
 3. [Warning Price](#warning-price)
 3. [Database](#database)
-3. [Example Uses](#example-uses)
 3. [Open VScode tunnel](#open-vscode-tunnel)
+3. [Summarize Sound](#summarize-sound)
+3. [Example Uses](#example-uses)
 3. [To-Do List](#to-do-list)
 
 ## Introduction
@@ -120,9 +121,6 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
    
    The chatbot employs Selenium to scrape trading data from FTPS. The scraped data provides insights into buy/sell periods and facilitates analysis of win/loss trading patterns. The code for this functionality is available in src/trading_record.py. This feature enhances the chatbot's capability to provide valuable trading analytics. The code can be found in `src/trading_record.py`
 
-## Example Uses
-
-Explore practical implementations and demonstrations of the chatbot's functions in the `notebook` folder. These examples showcase real-world scenarios, illustrating how the chatbot can be effectively utilized for stock market monitoring.
 
 ## Open VScode tunnel 
 
@@ -142,7 +140,22 @@ Or in the `stock_boy.py`
 
 ## Summarize Sound
 
+The bot is in development to summarize all sounds from audio or voice
+.It can recognize sounds with various formats such as `.mp3, .wav,.ogg,.m4a` with [Whisper](https://github.com/openai/whisper) 
 
+To setup Whisper 
+
+      pip install git+https://github.com/openai/whisper.git 
+      # on Ubuntu or Debian
+      sudo apt update && sudo apt install ffmpeg
+
+Then I use Google Translate API to translate the text to English. All the code can be found `src/summarize_text.py`
+
+I am trying some summarize model but has some withdraws (the model is too big, or too dump)
+
+## Example Uses
+
+Explore practical implementations and demonstrations of the chatbot's functions in the `notebook` folder. These examples showcase real-world scenarios, illustrating how the chatbot can be effectively utilized for stock market monitoring.
 
 
 ## To-Do List
@@ -163,3 +176,4 @@ Note: Ensure that you have Python installed on your machine and the necessary pe
 
 
 Feel free to explore the various commands and leverage the bot for your stock-related analyses. If you have any questions or encounter issues, type `/help` for assistance. Happy investing!
+
