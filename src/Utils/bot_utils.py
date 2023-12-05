@@ -43,7 +43,8 @@ def validate_symbol_decorator(bot):
 
 def run_vscode_tunnel(bot, message):
     command = ['./code', 'tunnel']
-    bot.reply_to(message, f"VS Code remote tunnel opened!: https://vscode.dev/tunnel/bao_msi/root/code_Bao/stock_price_4_fun")
+    VSCODE_TUNNEL_LINK = os.getenv('VSCODE_TUNNEL_LINK')
+    bot.reply_to(message, f"VS Code remote tunnel opened!: {VSCODE_TUNNEL_LINK}")
     result = subprocess.run(command, check=True, text=True)
 
 def warning_macd(bot, watchlist, user_id):  # Pass the message parameter
