@@ -110,8 +110,8 @@ def config_parser(data_config_path = 'config/config.yaml'):
     return data
 
 def validate_mrzaizai2k_user(user_id):
-    MRZAIZAI2K_ID= os.getenv('MRZAIZAI2K_ID')
-    if user_id != MRZAIZAI2K_ID:
+    MRZAIZAI2K_ID = os.getenv('MRZAIZAI2K_ID')
+    if str(user_id) != MRZAIZAI2K_ID:
         return False
     return True
 

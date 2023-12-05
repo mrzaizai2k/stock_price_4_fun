@@ -302,9 +302,8 @@ def process_remove_stock(message):
 
 @bot.message_handler(commands=['remote'])
 def open_vscode_tunnel(message):
-    user_id = message.chat.id
-    if not validate_mrzaizai2k_user(user_id):
-        bot.send_message(message, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, close the git repo and modify the code")
+    if not validate_mrzaizai2k_user(message.chat.id):
+        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, close the git repo and modify the code")
         return
     bot.reply_to(message, f"VS Code remote tunnel Opening...")
     Thread(target=run_vscode_tunnel, args=(bot, message)).start()
