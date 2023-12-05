@@ -31,7 +31,7 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 14. `/watchlist`: See/change your watch list
 15. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
-15. `/remote`: Open remote tunnel to vscode on my latop
+15. `/remote`: Open remote tunnel to vscode on my latop. 
 
 ## How to Use
 1. Start a command with a forward slash ("/") followed by the desired command.

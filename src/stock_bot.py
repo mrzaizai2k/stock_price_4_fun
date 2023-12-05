@@ -54,7 +54,7 @@ def help(message):
     bot.send_message(message.chat.id, "\n/watchlist: See/change watch list")
     bot.send_message(message.chat.id, "\n/winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)")
     bot.send_message(message.chat.id, "\n/buysellanalyze: Picture of my Buy sell for a stock (FPTS data)")
-    bot.send_message(message.chat.id, "\n/remote: Open remote tunnel to vscode on my latop")
+    bot.send_message(message.chat.id, "\n/remote: Open remote tunnel to vscode on mrzaizai2k latop. Can only be used by me!")
     bot.send_message(message.chat.id, "\n Summarize idea from Audio or Voice")
 
 
@@ -243,7 +243,6 @@ def findpbt(message):
 
 @bot.message_handler(commands=['winlossanalyze'])
 def analyze_winloss(message):
-
     win_loss_df_path = data.get('win_loss_df_path', None)
     winloss_analyzer = WinLossAnalyzer(win_loss_df_path=win_loss_df_path)
     report = winloss_analyzer.get_report()
@@ -303,6 +302,10 @@ def process_remove_stock(message):
 
 @bot.message_handler(commands=['remote'])
 def open_vscode_tunnel(message):
+    user_id = message.chat.id
+    if not validate_mrzaizai2k_user(user_id):
+        bot.send_message(message, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, close the git repo and modify the code")
+        return
     bot.reply_to(message, f"VS Code remote tunnel Opening...")
     Thread(target=run_vscode_tunnel, args=(bot, message)).start()
 

@@ -109,6 +109,11 @@ def config_parser(data_config_path = 'config/config.yaml'):
         data = yaml.safe_load(file)
     return data
 
+def validate_mrzaizai2k_user(user_id):
+    MRZAIZAI2K_ID= os.getenv('MRZAIZAI2K_ID')
+    if user_id != MRZAIZAI2K_ID:
+        return False
+    return True
 
 class UserDatabase:
     def __init__(self, user_data_path:str='data/user_db.csv'):
