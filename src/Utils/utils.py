@@ -115,6 +115,7 @@ def validate_mrzaizai2k_user(user_id):
         return False
     return True
 
+
 class UserDatabase:
     def __init__(self, user_data_path:str='data/user_db.csv'):
         self.user_data_path = user_data_path

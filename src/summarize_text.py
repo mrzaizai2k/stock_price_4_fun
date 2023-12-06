@@ -8,6 +8,8 @@ import urllib3
 
 urllib3.disable_warnings()
 from typing import Literal
+from transformers import pipeline
+from bs4 import BeautifulSoup
 
 class GoogleTranslator:
     def __init__(self):
@@ -86,8 +88,128 @@ class SpeechSummaryProcessor:
         else:
             return self.translate_to_english(segmented_text)
 
+class NewsScraper:
+    '''
+    Scape News from https://vnexpress.net/ 
+    How to run selenium on linux
+    https://cloudbytes.dev/snippets/run-selenium-and-chrome-on-wsl2#:~:text=With%20Selenium%20libraries%2C%20Python%20can,using%20Python%20and%20Selenium%20webdriver.
+    
+    '''
+    def __init__(self):
+        pass
+
+    def search_stock_news(self, symbol:str = "SSI",
+                          date_format:Literal['day', 'week', 'month', 'year']='day')-> list : 
+        symbol = symbol.upper()
+        url = f"https://timkiem.vnexpress.net/?search_f=&q={symbol}&date_format={date_format}&"
+
+        # Send a GET request to the webpage
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        attemp = 0
+        max_attemps = 3
+        news_urls = []
+
+        while attemp <= max_attemps:
+            try:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                # Assuming the news articles are wrapped in <article> elements
+                articles = soup.find_all('article', class_='item-news-common')
+                # Iterate through each article and extract the URL
+                for article in articles:
+                    url = article.get('data-url')
+                    if url:
+                        news_urls.append(url)
+
+                break
+                
+            except Exception as e:
+                print(f"An error occurred: {str(e)}")
+                print("Resetting the Scraper in 10 seconds...")
+                time.sleep(10)  
+                attemp += 1
+                if attemp > max_attemps:
+                    print("Max attempts reached. Exiting.")
+                    break
+
+        return news_urls
+
+    def take_text_from_link(self, news_url):
+        # Send a GET request to the webpage
+        response = requests.get(news_url)
+
+        # Assuming 'html_content' contains the HTML content of the page
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Assuming the news article is wrapped in <article> element with class "fck_detail"
+        article = soup.find('article', class_='fck_detail')
+
+        # Assuming the text is within <p> elements with class "Normal"
+        normal_paragraphs = article.find_all('p', class_='Normal')
+        # Extracting the text content from each <p> element
+        news_text = ""
+        for paragraph in normal_paragraphs:
+            news_text += f"{paragraph.text}\n"
+        return  news_text
+
+
+
+class NewsSummarizer:
+    def __init__(self, summarizer = pipeline("summarization", model="Falconsai/text_summarization"),
+                 translator = GoogleTranslator(),
+                 max_length:int=230, 
+                 min_length:int=30,
+                 ):
+        self.summarizer = summarizer
+        self.translator = translator
+        self.max_length = max_length
+        self.min_length = min_length
+        
+    def summary_text(self,text:str)->str:
+        '''Summary short text'''
+        text = self.translator.translate(text=text, to_lang='en')
+        text = self.summarizer(text, max_length=self.max_length, min_length=self.min_length, do_sample=False)[0]['summary_text']
+        summary_text = self.translator.translate(text=text, to_lang='vi')
+        return summary_text
+    
+    def summary_news(self, news:str)->str:
+        '''
+        Summary news. Because the news is too long (Loss of Information) so I will split news into 2 parts
+        '''
+        sample = news.split('. ')
+        art1 = '. '.join(sample[:int(len(sample)/2)])
+        art2 = '. '.join(sample[int(len(sample)/2):])
+        sum_art1 = self.summary_text(art1)
+        sum_art2 = self.summary_text(art2)
+        summary_text = f'   {sum_art1}\n    {sum_art2}'
+        return summary_text
+    
+
+def summary_stock_news(watch_list):
+    news_scraper = NewsScraper()
+    new_summarizer = NewsSummarizer()
+    final = ""
+    final += f"Đây là bản tóm tắt tin tức hôm nay dựa trên watch list của bạn:\n"
+    for stock in watch_list:
+        news_list = news_scraper.search_stock_news(symbol=stock, date_format='month')[:1]
+        for news_url in news_list:
+            news = news_scraper.take_text_from_link(news_url=news_url)  
+            sum_text = new_summarizer.summary_news(news= news)
+            # print ('sum_text', sum_text)
+            final += f"\n -- Stock: {stock} \n {sum_text} \n Link: {news_url} \n--------------\n"
+    
+    return final
 
 if __name__ == "__main__":
     speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
     text = speech_to_text.generate_speech_to_text()
     print ('Text', text)
+
+    symbol = 'SSI'
+    date_format='year'
+    news_scraper = NewsScraper()
+    news_list = news_scraper.search_stock_news(symbol=symbol, date_format=date_format)
+    news = news_scraper.take_text_from_link(news_url=news_list[0])
+    new_summarizer = NewsSummarizer()
+    sum_text = new_summarizer.summary_news(news= news)
+    print('sum_text', sum_text)

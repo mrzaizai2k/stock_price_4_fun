@@ -9,6 +9,7 @@
 3. [Database](#database)
 3. [Open VScode tunnel](#open-vscode-tunnel)
 3. [Summarize Sound](#summarize-sound)
+3. [Summarize News](#summarize-news)
 3. [Example Uses](#example-uses)
 3. [To-Do List](#to-do-list)
 
@@ -152,6 +153,10 @@ To setup Whisper
 Then I use Google Translate API to translate the text to English. All the code can be found `src/summarize_text.py`
 
 I am trying some summarize model but has some withdraws (the model is too big, or too dump)
+
+## Summarize News
+ The bot can also summarize news for stocks in your watch list 
+
 
 ## Example Uses
 

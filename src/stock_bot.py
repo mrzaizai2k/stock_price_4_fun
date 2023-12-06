@@ -22,7 +22,7 @@ from src.motif import MotifMatching, find_best_motifs
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
-from src.summarize_text import SpeechSummaryProcessor
+from src.summarize_text import SpeechSummaryProcessor, summary_stock_news
 
 
 
@@ -325,6 +325,16 @@ def warning_stock():
                 else:
                     schedule.every().day.at(f"{time_str}").do(func, bot=bot , watchlist=watchlist, user_id=user)
 
+def summary_news_from_watchlist():
+    user_db = UserDatabase(user_data_path=user_data_path)
+    user_list = user_db.get_users_for_warning()
+    # Schedule the jobs for each day and time
+    for user in user_list:
+        watchlist = user_db.get_watch_list(user_id=user)
+        summary_news = summary_stock_news(watch_list=watchlist)
+        bot.send_message(user, summary_news)
+
+
 @bot.message_handler(content_types=['audio','voice'])
 def summarize_sound(message):
     bot.send_message(message.chat.id, "Proccessing...")
@@ -354,6 +364,8 @@ def main():
 
     warning_stock()
     schedule.every().day.at(data.get('scape_trading_data_time')).do(scrape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
+    schedule.every().day.at(data.get('news_summary_time')).do(summary_news_from_watchlist)
+
     Thread(target=schedule_checker).start() 
 
 

@@ -21,6 +21,8 @@ import time
 from datetime import datetime,timedelta
 from typing import Literal, Optional
 
+from bs4 import BeautifulSoup
+
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
