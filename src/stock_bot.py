@@ -13,7 +13,6 @@ from telebot import types
 from dotenv import load_dotenv
 load_dotenv()
 
-# from telegram.ext.filters import Filters 
 from Utils.utils import *
 from Utils.bot_utils import warning_macd, warningpricevsma, warningsnr, warningbigday, validate_symbol_decorator, run_vscode_tunnel
 from src.PayBackTime import PayBackTime, find_PBT_stocks
@@ -22,7 +21,7 @@ from src.motif import MotifMatching, BestMarketMotifSearch
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
-from src.summarize_text import SpeechSummaryProcessor, summary_stock_news
+from src.summarize_text import *
 
 
 data = config_parser(data_config_path = 'config/config.yaml')
@@ -314,13 +313,31 @@ def warning_stock():
                 else:
                     schedule.every().day.at(f"{time_str}").do(func, bot=bot , watchlist=watchlist, user_id=user)
 
-def summary_news_from_watchlist():
+def summary_news_daily():
+    user_db = UserDatabase(user_data_path=user_data_path)
+    all_stocks = user_db.get_all_watchlist()
+    summary_stock_news(watch_list=all_stocks, 
+                       summary_news_data_path=data.get('summary_news_data_path'))
+
+def send_summary_news():
     user_db = UserDatabase(user_data_path=user_data_path)
     user_list = user_db.get_users_for_warning()
     # Schedule the jobs for each day and time
     for user in user_list:
         watchlist = user_db.get_watch_list(user_id=user)
-        summary_news = summary_stock_news(watch_list=watchlist)
+        summary_news_data_path=data.get('summary_news_data_path')
+        all_stocks_list = get_all_stocks(summary_news_data_path)
+        common_stocks = list(set(watchlist) & set(all_stocks_list))
+
+        summary_data = read_summary_stock_news(summary_news_data_path=summary_news_data_path)
+        summary_news = f"Đây là bản tin tổng hợp hàng ngày"
+        for stock in common_stocks:
+            news_text, news_url =  extract_text_for_stock(stock, summary_data)
+            summary_news += f"\nStock: {stock}"
+            summary_news += f"\n{news_text}"
+            summary_news += f"\nLink: {news_url}"
+            summary_news += f"\n-------------"
+            
         bot.send_message(user, summary_news)
 
 
@@ -353,7 +370,8 @@ def main():
 
     warning_stock()
     schedule.every().day.at(data.get('scape_trading_data_time')).do(scrape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
-    schedule.every().day.at(data.get('news_summary_time')).do(summary_news_from_watchlist)
+    schedule.every().day.at(data.get('news_summary_time')).do(summary_news_daily)
+    schedule.every().day.at(data.get('send_news_summary_time')).do(send_summary_news)
 
     Thread(target=schedule_checker).start() 
 

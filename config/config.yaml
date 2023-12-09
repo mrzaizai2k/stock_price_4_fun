@@ -3,6 +3,7 @@ win_loss_df_path: data/BaoCaoLaiLo_058C647873.csv
 buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
 asset_data_path: data/BaoCaoTaiSan_058C647873.csv
 motif_data_path: memory/motif.csv
+summary_news_data_path: data/summary_stock_news.json
 
 
 pvma_offset: 3 #PricevsMA
@@ -20,7 +21,9 @@ times:
 
 scape_trading_data_time: '22:59'
 
-news_summary_time: '07:30'
+news_summary_time: '22:30'
+
+send_news_summary_time: '07:30'
 
 help_commands_path: 'config/help_command.txt'
 

@@ -173,7 +173,22 @@ class UserDatabase:
     def get_users_for_warning(self) -> list:
         user_list = self.user_df[self.user_df['watch_list'].notna()]['user_ID'].tolist()
         return user_list
+    
+    def get_all_watchlist(self)-> list:
+        '''Get all stocks of all users'''
+        
+        all_watchlists = []
 
+        # Iterate through each user and append their watchlist to the combined list
+        for index, row in self.user_df.iterrows():
+            watch_list_str = row['watch_list']
+            if watch_list_str and watch_list_str != 'nan':
+                all_watchlists.extend(watch_list_str.split(', '))
+
+        # Remove duplicates by converting to a set and then back to a list
+        all_watchlists = list(set(all_watchlists))
+
+        return all_watchlists
 
 def main():
     print('Hi')

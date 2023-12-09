@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # from telegram.ext.filters import Filters 
-from Utils.utils import *
+from src.Utils.utils import *
 from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.motif import MotifMatching, BestMarketMotifSearch
 from src.Indicators import MACD, BigDayWarning, PricevsMA
