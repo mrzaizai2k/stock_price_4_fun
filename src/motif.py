@@ -17,6 +17,7 @@ from src.Utils.utils import *
 from src.stock_class import Stock
 
 
+
 class MotifMatching(Stock):
     def __init__(self, symbol:str = 'MWG',
                  start_date = None, end_date = None,
@@ -118,8 +119,19 @@ class MotifMatching(Stock):
             formatted_end_date = self.format_date_from_idx(dataframe = self.dataframe[self.time_col], index = idx + self.m -1)
             distance = distance_profile[i, 0]
             print(f"From {formatted_start_date} to {formatted_end_date}: Distance = {distance}")
+        return k_index
 
-        plt.figure(figsize=(12, 6))
+    def plot_and_save_top_pattern(self, 
+                        col="close",
+                        figsize=(12, 6),
+                        save_fig:bool = False,):
+        
+        k_index = self.find_top_pattern(col="close",top_k=3,)
+
+        Q_df = self.filtered_data[col]
+        T_df = self.dataframe[col]
+
+        plt.figure(figsize=figsize)
         plt.plot(T_df.values)
         for idx in k_index:
             plt.plot(
@@ -130,12 +142,19 @@ class MotifMatching(Stock):
             )
 
         plt.xlabel("Index")
-        plt.ylabel("Price")
+        plt.ylabel(col)
         plt.legend()
         plt.tight_layout()
-        plt.show()
+        if save_fig:
+            check_path('data')
+            save_path = f'data/{self.symbol}_top_pattern.png'
+            plt.savefig(save_path)
+            print(f'Plot saved in {save_path}')
+            return save_path
+        else:
+            plt.show()
+            return
 
-    
     def find_matching_series_multi_dim_with_date(self,
                                               dimension_cols:list=['close', 'volume'],
                                              nn_idx_threshold:int=None, distance_threshold:float = None,
@@ -190,6 +209,8 @@ class MotifMatching(Stock):
             plt.tight_layout()
             plt.show()
         return self.dataframe.iloc[nn_idx[0]].ticker, result 
+
+
 
 
 

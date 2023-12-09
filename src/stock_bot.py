@@ -26,7 +26,6 @@ from src.summarize_text import SpeechSummaryProcessor, summary_stock_news
 
 
 data = config_parser(data_config_path = 'config/config.yaml')
-
 user_data_path = data.get('user_data_path', None)
 TRADE_USER= os.getenv('TRADE_USER')
 TRADE_PASS= os.getenv('TRADE_PASS')
@@ -82,14 +81,16 @@ def find_similar_pattern(message, symbol):
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
 
     motif_matching = MotifMatching(symbol=symbol, start_date=start_date)
-    pattern_start_date, pattern_end_date, distance = motif_matching.find_similar_subseries_with_date()
+    image_path = motif_matching.plot_and_save_top_pattern(save_fig=True)
 
-    report = ""
-    report += f"The similar pattern for {symbol} from {start_date} to current day\n"
-    report += f"- Indices: from {pattern_start_date} to {pattern_end_date} (Window_size m = {motif_matching.m})\n"
-    report += f"- Distance: {distance:.2f}\n"
-    # Send the report to the user
-    bot.send_message(message.chat.id, report)
+    # Send the image
+    with open(image_path, 'rb') as photo:
+        bot.send_photo(message.chat.id, photo)
+
+    bot.send_message(message.chat.id, f"This is the top 3 pattern (close price) for your symbol {symbol}")
+
+    os.remove(image_path)
+
 
 def find_similar_pattern_multi_dimension(message, symbol):
 
