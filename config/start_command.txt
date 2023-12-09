@@ -1,0 +1,3 @@
+Welcome to the Mrzaizai2k Stock Assistant bot!
+Your all-in-one stock analysis companion. I can calculate payback time, find support/resistance, send market warnings and so on...
+-------------

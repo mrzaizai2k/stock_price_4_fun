@@ -1,0 +1,17 @@
+Available features:
+
+- /help - Show this help message
+- /pbt + symbol: Calculate the payback time for a stock
+- /snr + symbol: Find a closest support and resistance for a stock
+- /findpbt: find payback time stocks right now
+- /findmyfav: find my_param stocks right now
+- /risk + symbol: calculate how much stocks u can buy with loss/trade = 6% with max loss/capital = 2%
+- /rate + symbol: general rating the stock
+- /mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']
+- /pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']
+- /findbestmotif: Find the best motif on all the stocks
+- /watchlist: See/change watch list
+- /winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)
+- /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
+- /remote: Open remote tunnel to vscode on mrzaizai2k laptop. Can only be used by me!
+- Summarize idea from Audio or Voice

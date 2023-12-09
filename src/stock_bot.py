@@ -25,7 +25,6 @@ from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_
 from src.summarize_text import SpeechSummaryProcessor, summary_stock_news
 
 
-
 data = config_parser(data_config_path = 'config/config.yaml')
 
 user_data_path = data.get('user_data_path', None)
@@ -37,25 +36,14 @@ bot = telebot.TeleBot(TELEBOT_API)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, "Welcome to the Mrzaizai2k Stock Assistant bot! Type /help to see the available commands.")
+    start_commands = read_commands_from_file(data.get('start_commands_path'))
+    help_commands = read_commands_from_file(data.get('help_commands_path'))
+    bot.send_message(message.chat.id, f"{start_commands}{help_commands}" )
 
 @bot.message_handler(commands=['help'])
 def help(message):
-    bot.send_message(message.chat.id, "Available commands:\n/help - Show this help message")
-    bot.send_message(message.chat.id, "\n/pbt + symbol: Calculate the payback time for a stock")
-    bot.send_message(message.chat.id, "\n/snr + symbol: Find a closest support and resistance for a stock")
-    bot.send_message(message.chat.id, "\n/findpbt: find payback time stocks right now")
-    bot.send_message(message.chat.id, "\n/findmyfav: find my_param stocks right now")
-    bot.send_message(message.chat.id, "\n/risk + symbol: calculate how much stocks u can buy with loss/trade = 6% with max loss/capital = 2%")
-    bot.send_message(message.chat.id, "\n/rate + symbol: general rating the stock")
-    bot.send_message(message.chat.id, "\n/mulpattern + symbol + date (YYYY-mm-dd): find pattern of the stock on multi-dimension ['close', 'volume']")
-    bot.send_message(message.chat.id, "\n/pattern + symbol + date (YYYY-mm-dd): find pattern of the stock ['close']")
-    bot.send_message(message.chat.id, "\n/findbestmotif: Find the best motif on all the stocks")
-    bot.send_message(message.chat.id, "\n/watchlist: See/change watch list")
-    bot.send_message(message.chat.id, "\n/winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)")
-    bot.send_message(message.chat.id, "\n/buysellanalyze: Picture of my Buy sell for a stock (FPTS data)")
-    bot.send_message(message.chat.id, "\n/remote: Open remote tunnel to vscode on mrzaizai2k latop. Can only be used by me!")
-    bot.send_message(message.chat.id, "\n Summarize idea from Audio or Voice")
+    help_commands = read_commands_from_file(data.get('help_commands_path'))
+    bot.send_message(message.chat.id, help_commands)
 
 
 @bot.message_handler(commands=['rate', 'risk', 'pbt','mulpattern', 'pattern','snr','buysellanalyze'])

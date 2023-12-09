@@ -115,6 +115,10 @@ def validate_mrzaizai2k_user(user_id):
         return False
     return True
 
+def read_commands_from_file(filename):
+    with open(filename, 'r') as file:
+        commands_string = file.read()
+    return commands_string
 
 class UserDatabase:
     def __init__(self, user_data_path:str='data/user_db.csv'):
