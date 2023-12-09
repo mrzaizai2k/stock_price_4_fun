@@ -98,17 +98,15 @@ def find_similar_pattern_multi_dimension(message, symbol):
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
 
     motif_matching = MotifMatching(symbol=symbol, start_date=start_date)
-    ticker, result = motif_matching.find_matching_series_multi_dim_with_date()
-    pattern_start_date = motif_matching.dataframe.iloc[int(result[0])].time.strftime('%Y-%m-%d')
-    pattern_end_date= motif_matching.dataframe.iloc[int(result[0]) + motif_matching.m].time.strftime('%Y-%m-%d')
-    distance = result[2]
+    image_path = motif_matching.plot_and_save_find_matching_series_multi_dim_with_date(save_fig=True)
 
-    report = ""
-    report += f"The similar pattern for {ticker} from {start_date} to current day in multi dimension ['close','volume']\n"
-    report += f"- Indices: from {pattern_start_date} to {pattern_end_date} (Window_size m = {motif_matching.m})\n"
-    report += f"- Distance: {distance:.2f}\n"
-    # Send the report to the user
-    bot.send_message(message.chat.id, report)
+    # Send the image
+    with open(image_path, 'rb') as photo:
+        bot.send_photo(message.chat.id, photo)
+
+    bot.send_message(message.chat.id, f"This is the multi-dimension pattern (close & volume) for your symbol {symbol}")
+
+    os.remove(image_path)
 
 @validate_symbol_decorator(bot)
 def get_paybacktime(message):

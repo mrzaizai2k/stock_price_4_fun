@@ -157,62 +157,85 @@ class MotifMatching(Stock):
 
     def find_matching_series_multi_dim_with_date(self,
                                               dimension_cols:list=['close', 'volume'],
-                                             nn_idx_threshold:int=None, distance_threshold:float = None,
-                                             plot:bool=False):
+                                             nn_idx_threshold:int=None, 
+                                             distance_threshold:float = None,
+                                             ):
         
 
         start_date_index = len(self.dataframe) - self.m
-        df = self.dataframe[dimension_cols].reset_index(drop = True)
-        mps, indices = stumpy.mstump(df, self.m)
-        start_date_index = np.repeat(start_date_index, len(df.columns))
-        nn_idx = indices[np.arange(len(df.columns)), start_date_index]
+        filter_df = self.dataframe[dimension_cols].reset_index(drop = True)
+        mps, indices = stumpy.mstump(filter_df, self.m)
+        start_date_index = np.repeat(start_date_index, len(filter_df.columns))
+        nn_idx = indices[np.arange(len(filter_df.columns)), start_date_index]
         # Check if the absolute difference between element 1 and element 2 is less than threshold
         if nn_idx_threshold is not None and np.abs(nn_idx[1] - nn_idx[0]) > nn_idx_threshold:
-            return None, None
+            return None, None, None
         
         distance = []
-        for k in range(len(df.columns)):
+        for k in range(len(filter_df.columns)):
             distance.append(mps[k, nn_idx[k]])
         mean_distance = np.mean(distance)
 
         if distance_threshold is not None and mean_distance > distance_threshold:
-            return None, None
+            return None, None, None
         
         result  = np.concatenate((nn_idx, np.array([mean_distance])))
 
         print(f'm: {self.m}')
-        print(f'Ticker: {self.dataframe.iloc[nn_idx[0]].ticker}')
         print(f'From {self.dataframe.iloc[nn_idx[0]].time} to {self.dataframe.iloc[nn_idx[0] + self.m].time}')
         print(f'nn_idx: {nn_idx}')
 
-        if plot:
-            fig, axs = plt.subplots(mps.shape[0] * 2, sharex=True, gridspec_kw={'hspace': 0}, figsize=(14, 3 * mps.shape[0] * 2))
-            for k, dim_name in enumerate(df.columns):
-                axs[k].set_ylabel(dim_name, fontsize='20')
-                axs[k].plot(df[dim_name])
-                axs[k].set_xlabel('Time', fontsize ='20')
+        return result, mps, start_date_index
 
-                axs[k + mps.shape[0]].set_ylabel(dim_name.replace('T', 'P'), fontsize='20')
-                axs[k + mps.shape[0]].plot(mps[k], c='orange')
-                axs[k + mps.shape[0]].set_xlabel('Time', fontsize ='20')
+    def plot_and_save_find_matching_series_multi_dim_with_date(self,
+                                              dimension_cols:list=['close', 'volume'],
+                                             nn_idx_threshold:int=None, 
+                                             distance_threshold:float = None,
+                                             save_fig:bool=False):
+        
+        filter_df = self.dataframe[dimension_cols].reset_index(drop = True)
+        result, mps, start_date_index = self.find_matching_series_multi_dim_with_date(dimension_cols=dimension_cols,
+                                                                    nn_idx_threshold=nn_idx_threshold,
+                                                                    distance_threshold=distance_threshold,)
 
-                axs[k].axvline(x=start_date_index[1], linestyle="dashed", c='black')
-                axs[k].axvline(x=nn_idx[1], linestyle="dashed", c='black')
-                axs[k + mps.shape[0]].axvline(x=start_date_index[1], linestyle="dashed", c='black')
-                axs[k + mps.shape[0]].axvline(x=nn_idx[1], linestyle="dashed", c='black')
+        if result is None:
+            return
+        
+        nn_idx = result[:-1].astype(int)
+        
+        fig, axs = plt.subplots(mps.shape[0] * 2, sharex=True, gridspec_kw={'hspace': 0}, figsize=(14, 3 * mps.shape[0] * 2))
+        fig.suptitle(f"Multi-dimension pattern for {self.symbol} with window_size = {self.m}", fontsize=20)
 
-                axs[k].plot(range(start_date_index[k], start_date_index[k] + self.m), df[dim_name].iloc[start_date_index[k] : start_date_index[k] + self.m], c='red', linewidth=4)
-                axs[k].plot(range(nn_idx[k], nn_idx[k] + self.m), df[dim_name].iloc[nn_idx[k] : nn_idx[k] + self.m], c='red', linewidth=4)
-                axs[k + mps.shape[0]].plot(start_date_index[k], mps[k, start_date_index[k]] + 1, marker="v", markersize=10, color='red')
-                axs[k + mps.shape[0]].plot(nn_idx[k], mps[k, nn_idx[k]] + 1, marker="v", markersize=10, color='red')
+        for k, dim_name in enumerate(filter_df.columns):
+            axs[k].set_ylabel(dim_name, fontsize='20')
+            axs[k].plot(filter_df[dim_name])
+            axs[k].set_xlabel('Time', fontsize ='20')
 
-            plt.tight_layout()
+            axs[k + mps.shape[0]].set_ylabel(dim_name.replace('T', 'P'), fontsize='20')
+            axs[k + mps.shape[0]].plot(mps[k], c='orange')
+            axs[k + mps.shape[0]].set_xlabel('Time', fontsize ='20')
+
+            axs[k].axvline(x=start_date_index[1], linestyle="dashed", c='black')
+            axs[k].axvline(x=nn_idx[1], linestyle="dashed", c='black')
+            axs[k + mps.shape[0]].axvline(x=start_date_index[1], linestyle="dashed", c='black')
+            axs[k + mps.shape[0]].axvline(x=nn_idx[1], linestyle="dashed", c='black')
+
+            axs[k].plot(range(start_date_index[k], start_date_index[k] + self.m), filter_df[dim_name].iloc[start_date_index[k] : start_date_index[k] + self.m], c='red', linewidth=4)
+            axs[k].plot(range(nn_idx[k], nn_idx[k] + self.m), filter_df[dim_name].iloc[nn_idx[k] : nn_idx[k] + self.m], c='red', linewidth=4)
+            axs[k + mps.shape[0]].plot(start_date_index[k], mps[k, start_date_index[k]] + 1, marker="v", markersize=10, color='red')
+            axs[k + mps.shape[0]].plot(nn_idx[k], mps[k, nn_idx[k]] + 1, marker="v", markersize=10, color='red')
+
+        plt.tight_layout()
+        if save_fig:
+            check_path('data')
+            save_path = f'data/{self.symbol}_multi_dimension_pattern.png'
+            plt.savefig(save_path)
+            print(f'Plot saved in {save_path}')
+            return save_path
+        else:
             plt.show()
-        return self.dataframe.iloc[nn_idx[0]].ticker, result 
-
-
-
-
+            return
+    
 
 def motif_pre_filter()->list[str]:
     # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
@@ -241,25 +264,28 @@ def find_best_motifs(start_date = None, end_date = None,
 
     for ticker in unique_tickers:
         motif = MotifMatching(symbol = ticker, start_date=start_date, end_date=end_date)
-        stock_name, result = motif.find_matching_series_multi_dim_with_date(
+        
+        result, mps, start_date_index = motif.find_matching_series_multi_dim_with_date(
                                                                             dimension_cols=dimension_cols,
                                                                             nn_idx_threshold=nn_idx_threshold, 
                                                                             distance_threshold = distance_threshold, 
-                                                                            plot = plot)
+                                                                            )
         
         # Check if the stock_name is not None
-        if stock_name is not None:
+        if result is not None:
+            print ("Ticker", ticker)
             # Add the result to the dictionary with stock_name as the key
             pattern_start_date = motif.dataframe.iloc[int(result[0])].time.strftime('%Y-%m-%d')
             pattern_end_date= motif.dataframe.iloc[int(result[0]) + motif.m].time.strftime('%Y-%m-%d')
             distance = result[2]
-            results_dict[stock_name] = [pattern_start_date, pattern_end_date, distance]
+            results_dict[ticker] = [pattern_start_date, pattern_end_date, distance]
 
     return results_dict
 
 def main():
     motif_matching = MotifMatching('VNINDEX', start_date="2023-09-11")
     motif_matching.find_top_pattern()
+    # find_best_motifs()
 
 if __name__ =="__main__":
     main()
