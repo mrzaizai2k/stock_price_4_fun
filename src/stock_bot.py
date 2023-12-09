@@ -18,7 +18,7 @@ from Utils.utils import *
 from Utils.bot_utils import warning_macd, warningpricevsma, warningsnr, warningbigday, validate_symbol_decorator, run_vscode_tunnel
 from src.PayBackTime import PayBackTime, find_PBT_stocks
 from src.stock_class import Stock
-from src.motif import MotifMatching, find_best_motifs
+from src.motif import MotifMatching, BestMarketMotifSearch
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
@@ -218,7 +218,8 @@ def findmyfav(message):
 @bot.message_handler(commands=['findbestmotif'])
 def findpbt(message):
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
-    result_dict = find_best_motifs()
+    market_motif_search = BestMarketMotifSearch(motif_data_path=data.get('motif_data_path'))
+    result_dict = market_motif_search.find_best_motifs()
     report = ""
     for stock, values in result_dict.items():
         start_date, end_date, distance = values
@@ -226,6 +227,7 @@ def findpbt(message):
         report += f"- Date: {start_date} to {end_date}\n"
         report += f"- Distance: {distance:.3f}\n\n"
     # Send the report to the user
+    report += f"Use /mulpattern to see the pattern of each stock with date: {market_motif_search.start_date}"
     bot.send_message(message.chat.id, report)
 
 @bot.message_handler(commands=['winlossanalyze'])

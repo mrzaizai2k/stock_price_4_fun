@@ -2,6 +2,7 @@ user_data_path: data/user_db.csv
 win_loss_df_path: data/BaoCaoLaiLo_058C647873.csv
 buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
 asset_data_path: data/BaoCaoTaiSan_058C647873.csv
+motif_data_path: memory/motif.csv
 
 
 pvma_offset: 3 #PricevsMA

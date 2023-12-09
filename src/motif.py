@@ -153,7 +153,7 @@ class MotifMatching(Stock):
             return save_path
         else:
             plt.show()
-            return
+            return None
 
     def find_matching_series_multi_dim_with_date(self,
                                               dimension_cols:list=['close', 'volume'],
@@ -199,12 +199,13 @@ class MotifMatching(Stock):
                                                                     distance_threshold=distance_threshold,)
 
         if result is None:
-            return
+            return None
         
         nn_idx = result[:-1].astype(int)
         
         fig, axs = plt.subplots(mps.shape[0] * 2, sharex=True, gridspec_kw={'hspace': 0}, figsize=(14, 3 * mps.shape[0] * 2))
-        fig.suptitle(f"Multi-dimension pattern for {self.symbol} with window_size = {self.m}", fontsize=20)
+        fig.suptitle(f"Multi-dimension pattern for {self.symbol}", fontsize=20)
+        fig.text(0.5, 0.92, f"Window Size = {self.m} | Distance = {result[-1]:.2f}", ha='center', fontsize=17)
 
         for k, dim_name in enumerate(filter_df.columns):
             axs[k].set_ylabel(dim_name, fontsize='20')
@@ -234,58 +235,124 @@ class MotifMatching(Stock):
             return save_path
         else:
             plt.show()
-            return
-    
-
-def motif_pre_filter()->list[str]:
-    # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
-    motif_params = {
-        "exchangeName": "HOSE",
-        "marketCap": (1_000, 200_000),
-        # "avgTradingValue20Day": (100, 20000),  # Minimum 20-day average trading value
-        # 'revenueGrowth5Year': (15,100),
-        # 'pe':(10,20),
-        # "epsGrowth5Year": (10, 100),  # Minimum 1-year EPS growth
-        # "roe": (15, 100),  # Minimum Return on Equity (ROE)
-        'priceNearRealtime': (15,80),
-        "lastQuarterProfitGrowth": (2, 100),  # Minimum last quarter profit growth
-        }
-    df = filter_stocks(motif_params)
-    return df['ticker'].to_list()
+            return None
 
 
-def find_best_motifs(start_date = None, end_date = None,
-                    dimension_cols:list=['close', 'volume'],
-                    nn_idx_threshold:int=5, 
-                    distance_threshold:float = 5, 
-                    plot:bool = False):
-    unique_tickers = motif_pre_filter()
-    results_dict = {}  # Initialize an empty dictionary to store results
+class BestMarketMotifSearch:
+    '''Search best motif on all stocks on the market'''
 
-    for ticker in unique_tickers:
-        motif = MotifMatching(symbol = ticker, start_date=start_date, end_date=end_date)
+    def __init__(self, start_date:str=None, 
+                 end_date:str=None, 
+                 dimension_cols:list=['close', 'volume'], 
+                 nn_idx_threshold:int=5, 
+                 distance_threshold:float=5, 
+                 motif_data_path:str='memory/motif.csv'):
         
-        result, mps, start_date_index = motif.find_matching_series_multi_dim_with_date(
-                                                                            dimension_cols=dimension_cols,
-                                                                            nn_idx_threshold=nn_idx_threshold, 
-                                                                            distance_threshold = distance_threshold, 
-                                                                            )
-        
-        # Check if the stock_name is not None
-        if result is not None:
-            print ("Ticker", ticker)
-            # Add the result to the dictionary with stock_name as the key
-            pattern_start_date = motif.dataframe.iloc[int(result[0])].time.strftime('%Y-%m-%d')
-            pattern_end_date= motif.dataframe.iloc[int(result[0]) + motif.m].time.strftime('%Y-%m-%d')
-            distance = result[2]
-            results_dict[ticker] = [pattern_start_date, pattern_end_date, distance]
+        self.end_date = end_date
+        if self.end_date is None:
+            self.end_date = datetime.now().strftime("%Y-%m-%d")
 
-    return results_dict
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = (
+                datetime.strptime(self.end_date, "%Y-%m-%d") - timedelta(days=30)
+            ).strftime("%Y-%m-%d")
+
+        self.dimension_cols = dimension_cols
+        self.nn_idx_threshold = nn_idx_threshold
+        self.distance_threshold = distance_threshold
+        self.motif_data_path = motif_data_path
+        self.date_format ='%Y-%m-%d'
+        self.current_date = datetime.today().strftime(self.date_format)
+
+    def motif_pre_filter(self) -> list[str]:
+        # https://www.youtube.com/watch?v=4YPyxfXML0A&t=1825s
+        motif_params = {
+            "exchangeName": "HOSE",
+            "marketCap": (1_000, 200_000),
+            # "avgTradingValue20Day": (100, 20000),  # Minimum 20-day average trading value
+            # 'revenueGrowth5Year': (15,100),
+            # 'pe':(10,20),
+            # "epsGrowth5Year": (10, 100),  # Minimum 1-year EPS growth
+            # "roe": (15, 100),  # Minimum Return on Equity (ROE)
+            'priceNearRealtime': (15,80),
+            "lastQuarterProfitGrowth": (2, 100),  # Minimum last quarter profit growth
+            }
+        df = filter_stocks(motif_params)
+        return df['ticker'].to_list()
+
+    def calculate_best_motif_from_scratch(self):
+        '''Prefilter the stock on the market that match teh standard then find best motif among them'''
+        unique_tickers = self.motif_pre_filter()
+        results_dict = {}
+
+        for ticker in unique_tickers:
+            motif = MotifMatching(symbol=ticker, start_date=self.start_date, end_date=self.end_date)
+
+            result, mps, start_date_index = motif.find_matching_series_multi_dim_with_date(
+                                                dimension_cols=self.dimension_cols,
+                                                nn_idx_threshold=self.nn_idx_threshold,
+                                                distance_threshold=self.distance_threshold,
+                                            )
+
+            if result is not None:
+                pattern_start_date = motif.dataframe.iloc[int(result[0])].time.strftime(self.date_format)
+                pattern_end_date = motif.dataframe.iloc[int(result[0]) + motif.m].time.strftime(self.date_format)
+                distance = result[2]
+                results_dict[ticker] = [pattern_start_date, pattern_end_date, distance]
+
+        return results_dict
+
+    def load_motif_csv(self):
+        '''Check if there is database'''
+        check_path(self.motif_data_path)
+        if os.path.exists(self.motif_data_path):
+            return pd.read_csv(self.motif_data_path)
+        return None
+
+    def save_motif_csv(self, results_dict):
+        '''Save result from calculate_best_motif_from_scratch to database'''
+        df = pd.DataFrame(results_dict.items(), columns=['stock_name', 'info'])
+        df[['pattern_start_date', 'pattern_end_date', 'distance']] = pd.DataFrame(df['info'].tolist(), index=df.index)
+        df.drop(columns=['info'], inplace=True)
+        df['backup_date'] = self.current_date
+        df.to_csv(self.motif_data_path, index=False)
+
+    def find_best_motifs(self):
+        '''
+        1. Search best motif on database
+        2. If there is no database, create one
+        3. If the data is not today data. Recalculate best motif
+        '''
+        motif_df = self.load_motif_csv()
+
+        if motif_df is not None and self.current_date in motif_df["backup_date"].values:
+            today_data = motif_df[motif_df['backup_date'] == self.current_date] 
+            results_dict = dict(zip(today_data['stock_name'], 
+                                    today_data[['pattern_start_date', 'pattern_end_date', 'distance']].values.tolist()))
+            return results_dict
+        else:
+            results_dict = self.calculate_best_motif_from_scratch()
+            self.save_motif_csv(results_dict)
+            return results_dict
+
+    def plot_best_motifs(self):
+        results_dict = self.find_best_motifs()
+        for ticker, values in results_dict.items():
+            motif = MotifMatching(symbol=ticker, start_date=self.start_date, end_date=self.end_date)
+            _ = motif.plot_and_save_find_matching_series_multi_dim_with_date(
+                                                dimension_cols=self.dimension_cols,
+                                                nn_idx_threshold=self.nn_idx_threshold,
+                                                distance_threshold=self.distance_threshold,
+                                            )
+        return
 
 def main():
     motif_matching = MotifMatching('VNINDEX', start_date="2023-09-11")
-    motif_matching.find_top_pattern()
-    # find_best_motifs()
+    # motif_matching.find_top_pattern()
+    market_motif_search = BestMarketMotifSearch(motif_data_path='memory/motif.csv')
+    results_dict = market_motif_search.find_best_motifs()
+    print(json.dumps(results_dict, indent=4))
 
 if __name__ =="__main__":
     main()
