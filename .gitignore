@@ -8,3 +8,4 @@ config/config.py
 *png
 *.gz
 code
+/model
