@@ -316,23 +316,25 @@ def warning_stock():
 def summary_news_daily():
     user_db = UserDatabase(user_data_path=user_data_path)
     all_stocks = user_db.get_all_watchlist()
-    summary_stock_news(watch_list=all_stocks, 
-                       summary_news_data_path=data.get('summary_news_data_path'))
+    stock_news_db = StockNewsDatabase(summary_news_data_path=data.get('summary_news_data_path'))
+    stock_news_db.update_stock_news(watch_list=all_stocks,)
+
 
 def send_summary_news():
     user_db = UserDatabase(user_data_path=user_data_path)
     user_list = user_db.get_users_for_warning()
+    stock_news_db = StockNewsDatabase(summary_news_data_path=data.get('summary_news_data_path'))
     # Schedule the jobs for each day and time
     for user in user_list:
         watchlist = user_db.get_watch_list(user_id=user)
         summary_news_data_path=data.get('summary_news_data_path')
-        all_stocks_list = get_all_stocks(summary_news_data_path)
+
+        all_stocks_list = stock_news_db.get_all_stocks()
         common_stocks = list(set(watchlist) & set(all_stocks_list))
 
-        summary_data = read_summary_stock_news(summary_news_data_path=summary_news_data_path)
         summary_news = f"Đây là bản tin tổng hợp hàng ngày"
         for stock in common_stocks:
-            news_text, news_url =  extract_text_for_stock(stock, summary_data)
+            news_text, news_url =  stock_news_db.extract_text_for_stock(stock)
             summary_news += f"\nStock: {stock}"
             summary_news += f"\n{news_text}"
             summary_news += f"\nLink: {news_url}"

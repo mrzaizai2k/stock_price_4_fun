@@ -1,3 +1,5 @@
+import sys
+sys.path.append("")
 import torch
 import whisper
 import requests
@@ -187,62 +189,68 @@ class NewsSummarizer:
         return summary_text
     
 
+class StockNewsDatabase:
+    def __init__(self, summary_news_data_path='data/summary_stock_news.json'):
+        self.summary_news_data_path = summary_news_data_path
+        self.news_scraper = NewsScraper()
+        self.new_summarizer = NewsSummarizer()
 
-def summary_stock_news(watch_list, 
-                       summary_news_data_path = 'data/summary_stock_news.json'):
-    news_scraper = NewsScraper()
-    new_summarizer = NewsSummarizer()
-    summary_data = []
+    def update_stock_news(self, watch_list):
+        '''Update the news summary on schedule'''
+        summary_data = []
 
-    for stock in watch_list:
-        news_list = news_scraper.search_stock_news(symbol=stock, date_format='month')[:1]
-        for news_url in news_list:
-            news = news_scraper.take_text_from_link(news_url=news_url)
-            sum_text = new_summarizer.summary_news(news=news)
+        for stock in watch_list:
+            news_list = self.news_scraper.search_stock_news(symbol=stock, date_format='month')[:1]
+            for news_url in news_list:
+                news = self.news_scraper.take_text_from_link(news_url=news_url)
+                sum_text = self.new_summarizer.summary_news(news=news)
 
-            # Append data to summary_data list
-            summary_data.append({
-                "stock": stock,
-                "summary_text": sum_text,
-                "news_url": news_url
-            })
+                # Append data to summary_data list
+                summary_data.append({
+                    "stock": stock,
+                    "summary_text": sum_text,
+                    "news_url": news_url
+                })
 
-    # Save the summary data to a JSON file
-    
-    check_path(summary_news_data_path)
-    with open(summary_news_data_path, 'w', encoding='utf-8') as json_file:
-        json.dump(summary_data, json_file, ensure_ascii=False, indent=2)
-    print(f"Summary data saved to {summary_news_data_path}")
-    return 
+        # Save the summary data to a JSON file
+        self._save_summary_data(summary_data)
 
-def read_summary_stock_news(summary_news_data_path='data/summary_stock_news.json'):
-    try:
-        with open(summary_news_data_path, 'r', encoding='utf-8') as json_file:
-            data = json.load(json_file)
-            return data
-    except FileNotFoundError:
-        print(f"Error: File {summary_news_data_path} not found.")
-        return None
+    def read_summary_stock_news(self):
+        try:
+            with open(self.summary_news_data_path, 'r', encoding='utf-8') as json_file:
+                data = json.load(json_file)
+                return data
+        except FileNotFoundError:
+            print(f"Error: File {self.summary_news_data_path} not found.")
+            return None
 
-def extract_text_for_stock(stock_symbol, summary_data):
-    for entry in summary_data:
-        if entry["stock"] == stock_symbol:
-            return entry["summary_text"], entry["news_url"]
+    def extract_text_for_stock(self, stock_symbol):
+        summary_data = self.read_summary_stock_news()
+        if summary_data is None:
+            return None, None
+        
+        for entry in summary_data:
+            if entry["stock"] == stock_symbol:
+                return entry["summary_text"], entry["news_url"]
 
-    print(f"No summary text found for stock: {stock_symbol}")
+        print(f"No summary text found for stock: {stock_symbol}")
+        return None, None
 
-    return None, None
+    def get_all_stocks(self):
+        summary_data = self.read_summary_stock_news()
 
-def get_all_stocks(summary_news_data_path='data/summary_stock_news.json'):
-    summary_data = read_summary_stock_news(summary_news_data_path)
-    
-    if summary_data:
-        all_stocks = set(entry["stock"] for entry in summary_data)
-        return list(all_stocks)
-    else:
-        return []
+        if summary_data:
+            all_stocks = set(entry["stock"] for entry in summary_data)
+            return list(all_stocks)
+        else:
+            return []
 
-
+    def _save_summary_data(self, summary_data):
+        check_path(self.summary_news_data_path)
+        with open(self.summary_news_data_path, 'w', encoding='utf-8') as json_file:
+            json.dump(summary_data, json_file, ensure_ascii=False, indent=2)
+        print(f"Summary data saved to {self.summary_news_data_path}")
+        
 if __name__ == "__main__":
     speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
     text = speech_to_text.generate_speech_to_text()
@@ -256,3 +264,5 @@ if __name__ == "__main__":
     new_summarizer = NewsSummarizer()
     sum_text = new_summarizer.summary_news(news= news)
     print('sum_text', sum_text)
+    news_db = StockNewsDatabase()
+    print(news_db.get_all_stocks())
