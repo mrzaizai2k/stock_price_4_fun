@@ -428,8 +428,8 @@ def summarize_sound(message):
     speech_to_text = SpeechSummaryProcessor(audio_path=file_path)
     text = speech_to_text.generate_speech_to_text()
 
-    reply_markup = handle_checklist(bot, text)
-    bot.reply_to(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
+    reply_markup = handle_checklist(text)
+    bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
     # text = f"Here's your note:\n {text}"
     # bot.reply_to(message, text)
     os.remove(file_path)
