@@ -31,7 +31,6 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 12. `/buysellanalyze`: Picture of my Buy/Sell of a stock (FPTS data)
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 14. `/watchlist`: See/change your watch list
-15. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 15. `/remote`: Open remote tunnel to vscode on my latop. 
 
 ## How to Use
@@ -139,6 +138,11 @@ Or in the `src/stock_bot.py`
 
       result = subprocess.run(command, check=True, text=True)
 
+Whenever you want to run your bot remotely, but got this issue: "make sure that only one bot instance is running". Please kill bot first
+
+      make kill
+      make bot
+
 ## Summarize Sound
 
 The bot is in development to summarize all sounds from audio or voice
@@ -154,8 +158,10 @@ Then I use Google Translate API to translate the text to English. All the code c
 
 I am trying some summarize model but has some withdraws (the model is too big, or too dump)
 
+The bot can also transform your text into to-do list. you can click to toggle the checklist 
+
 ## Summarize News
- The bot can also summarize news for stocks in your watch list 
+The bot can also summarize news for stocks in your watch list. The news database is stored in `data/summary_stock_news.json`. I will update the database to MongoDB
 
 
 ## Example Uses
@@ -166,14 +172,11 @@ Explore practical implementations and demonstrations of the chatbot's functions 
 ## To-Do List
 
 - [ ] **Stock Prediction with TFT Model**
-
-- [x] **Automated Data Scraping**
-
+- [ ] **Update DataBase using PostGreSQL and MongoDB**
 - [ ] **User_ID Encryption**
-
 - [ ] **Back Testing Bot**
-
-- [x] **Summarize voice**
+- [ ] **Summarize Market Hot News**
+- [ ] **Update the GIF demo use cases**
 
 
 

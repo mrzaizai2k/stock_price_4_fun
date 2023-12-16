@@ -12,5 +12,11 @@ test:
 	python src/Indicators.py
 	python src/support_resist.py
 	python src/summarize_text.py
-	
+
+list: #List all the running bots 
+	ps aux | grep python
+# To kill, use command (PID is the process ID): kill PID
+kill:
+	pkill -f "python src/stock_bot.py"
+
 all: install bot

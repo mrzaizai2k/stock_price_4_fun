@@ -92,6 +92,8 @@ def warning_macd(bot, watchlist, user_id):  # Pass the message parameter
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
         return bot.send_message(user_id, f'Report for stocks with warnings:\n{report_message}')
+    else:
+        print("There's no warning")
 
 
 def warningbigday(bot, watchlist, user_id):  # Pass the message parameter
@@ -109,7 +111,8 @@ def warningbigday(bot, watchlist, user_id):  # Pass the message parameter
         # If there are FTD warnings, send a report
         report_message = '\n'.join(warning_report)
         return bot.send_message(user_id, f'Report for stocks with big day warnings:\n{report_message}')
-
+    else:
+        print("There's no warning")
 
 def warningpricevsma(bot,watchlist, user_id, data_config):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
@@ -127,7 +130,8 @@ def warningpricevsma(bot,watchlist, user_id, data_config):  # Pass the message p
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
         return bot.send_message(user_id, f'Report for stocks with PricevsMA warnings:\n{report_message}')
-
+    else:
+        print("There's no warning")
 
 def warningsnr(bot, watchlist, user_id, data_config):  # Pass the message parameter
     warning_report = []  # Initialize an empty list to store warning reports
@@ -153,3 +157,5 @@ def warningsnr(bot, watchlist, user_id, data_config):  # Pass the message parame
         # If there are warnings, send a report
         report_message = '\n'.join(warning_report)
         return bot.send_message(user_id, f'Support/Resistance warning for stocks:\n{report_message}')
+    else:
+        print("There's no warning")
