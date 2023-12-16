@@ -24,6 +24,38 @@ from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
 
 # data = config_parser(data_config_path = 'config/config.yaml')
 
+def toggle_button_state(button_text, data_config_path:str = 'config/config.yaml'):
+    data = config_parser(data_config_path = data_config_path)
+    special_symbols = data.get('special_symbols')
+    CHECK_CHAR = special_symbols['CHECK_CHAR']
+    UNCHECK_CHAR = special_symbols['UNCHECK_CHAR']
+    return f'{UNCHECK_CHAR} {button_text.split(" ", 1)[-1]}' if button_text.startswith(CHECK_CHAR) else f'{CHECK_CHAR} {button_text.split(" ", 1)[-1]}'
+
+
+def handle_checklist(text, data_config_path:str = 'config/config.yaml'):
+
+    data = config_parser(data_config_path = data_config_path)
+    special_symbols = data.get('special_symbols')
+    CHECK_CHAR = special_symbols['CHECK_CHAR']
+    UNCHECK_CHAR = special_symbols['UNCHECK_CHAR']
+    
+    lines = text.split('\n')
+    keyboard = []
+    index = 0
+    previous_state = {}
+    for line in lines:
+        line_strip = line.strip()
+        if line_strip == '':
+            continue
+
+        keyboard.append([types.InlineKeyboardButton(
+            f"{CHECK_CHAR if previous_state.get(line_strip, False) else UNCHECK_CHAR} {line_strip}",
+            callback_data=f"checklist_toggle__{index}",
+        )])
+        index += 1
+
+    reply_markup = types.InlineKeyboardMarkup(keyboard)
+    return reply_markup
 
 def validate_symbol_decorator(bot):
     def decorator(func):

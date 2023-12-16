@@ -5,6 +5,9 @@ asset_data_path: data/BaoCaoTaiSan_058C647873.csv
 motif_data_path: memory/motif.csv
 summary_news_data_path: data/summary_stock_news.json
 
+special_symbols:
+  CHECK_CHAR: ✅
+  UNCHECK_CHAR: ⬜
 
 pvma_offset: 3 #PricevsMA
 tolerance_percent: 1 #for support and resistance
