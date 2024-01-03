@@ -1,4 +1,9 @@
 # Mrzaizai2k Stock Assistant Bot
+![CI/CD](https://github.com/mrzaizai2k/stock_price_4_fun/actions/workflows/workloads.yaml/badge.svg)
+[![Repo Size](https://img.shields.io/github/repo-size/mrzaizai2k/stock_price_4_fun?style=flat-square)](https://github.com/mrzaizai2k/stock_price_4_fun)
+[![License](https://img.shields.io/github/license/mrzaizai2k/stock_price_4_fun?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Release](https://img.shields.io/github/v/release/mrzaizai2k/stock_price_4_fun?style=flat-square)](https://github.com/mrzaizai2k/stock_price_4_fun/releases)
+
 
 ## Table of Contents
 1. [Introduction](#introduction)
