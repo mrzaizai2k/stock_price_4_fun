@@ -20,6 +20,7 @@ from src.motif import MotifMatching, BestMarketMotifSearch
 from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, TradeScraper
+from functools import wraps
 
 
 # data = config_parser(data_config_path = 'config/config.yaml')

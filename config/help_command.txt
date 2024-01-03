@@ -14,4 +14,4 @@ Available features:
 - /winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)
 - /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
 - /remote: Open remote tunnel to vscode on mrzaizai2k laptop. Can only be used by me!
-- Summarize idea from Audio or Voice
+- Summarize idea from Audio or Voice into To-Do list

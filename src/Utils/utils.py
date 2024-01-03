@@ -39,7 +39,7 @@ def convert_data_type(df, time_cols=[], float_cols=[], cat_cols=[]):
     return df
 
 def validate_symbol(symbol):
-    return (symbol in listing_companies(live=True).ticker.tolist()) or (symbol in ['VNINDEX','VN30'])
+    return (symbol in listing_companies(live=False).ticker.tolist()) or (symbol in ['VNINDEX','VN30'])
 
 def schedule_checker():
     while True:
