@@ -4,8 +4,8 @@
 [![License](https://img.shields.io/github/license/mrzaizai2k/stock_price_4_fun?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Release](https://img.shields.io/github/v/release/mrzaizai2k/stock_price_4_fun?style=flat-square)](https://github.com/mrzaizai2k/stock_price_4_fun/releases)
 
-<img src="./doc/help.jpg" alt="help" width="300"/> <img src="./doc/mulpattern.jpg" alt="mulpattern" width="300"/> <img src="./doc/pbt.jpg" alt="pbt" width="300"/> 
-<img src="./doc/winloss.jpg" alt="winloss" width="300"/> <img src="./doc/voice_summary.jpg" alt="voice_summary" width="300"/> <img src="./doc/buysell.jpg" alt="buysell" width="300"/>
+<img src="./doc/help.jpg" alt="help" width="200"/> <img src="./doc/mulpattern.jpg" alt="mulpattern" width="200"/> <img src="./doc/pbt.jpg" alt="pbt" width="200"/> 
+<img src="./doc/winloss.jpg" alt="winloss" width="200"/> <img src="./doc/voice_summary.jpg" alt="voice_summary" width="200"/> <img src="./doc/buysell.jpg" alt="buysell" width="200"/>
 
 ## Table of Contents
 1. [Introduction](#introduction)
