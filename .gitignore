@@ -9,3 +9,4 @@ config/config.py
 *.gz
 code
 /model
+/doc
