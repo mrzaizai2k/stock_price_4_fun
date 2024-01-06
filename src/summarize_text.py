@@ -17,9 +17,7 @@ from src.Utils.utils import check_path
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import (
-    UnstructuredHTMLLoader,
-    BSHTMLLoader,
-    UnstructuredURLLoader,
+    NewsURLLoader,
 )
 from unstructured.cleaners.core import clean_extra_whitespace
 from langchain.text_splitter import TokenTextSplitter
@@ -102,6 +100,7 @@ class SpeechSummaryProcessor:
         else:
             return self.translate_to_english(segmented_text)
 
+
 class NewsScraper:
     '''
     Scape News from https://vnexpress.net/ 
@@ -148,24 +147,13 @@ class NewsScraper:
 
         return news_urls
 
-    def take_text_from_link(self, news_url):
-        # Send a GET request to the webpage
-        response = requests.get(news_url)
-
-        # Assuming 'html_content' contains the HTML content of the page
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Assuming the news article is wrapped in <article> element with class "fck_detail"
-        article = soup.find('article', class_='fck_detail')
-
-        # Assuming the text is within <p> elements with class "Normal"
-        normal_paragraphs = article.find_all('p', class_='Normal')
-        # Extracting the text content from each <p> element
-        news_text = ""
-        for paragraph in normal_paragraphs:
-            news_text += f"{paragraph.text}\n"
+    def take_text_from_link(self, news_url:str) -> str :
+        news_url = [news_url]
+        loader = NewsURLLoader(urls=news_url, 
+                            post_processors=[clean_extra_whitespace],)
+        news_text = loader.load()
+        news_text = news_text[0].page_content
         return  news_text
-
 
 
 class NewsSummarizer:
