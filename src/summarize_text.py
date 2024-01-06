@@ -15,6 +15,16 @@ from transformers import pipeline
 from bs4 import BeautifulSoup
 from src.Utils.utils import check_path
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import (
+    UnstructuredHTMLLoader,
+    BSHTMLLoader,
+    UnstructuredURLLoader,
+)
+from unstructured.cleaners.core import clean_extra_whitespace
+from langchain.text_splitter import TokenTextSplitter
+
+    
 class GoogleTranslator:
     def __init__(self):
         pass
@@ -171,21 +181,20 @@ class NewsSummarizer:
         
     def summary_text(self,text:str)->str:
         '''Summary short text'''
-        text = self.translator.translate(text=text, to_lang='en')
-        text = self.summarizer(text, max_length=self.max_length, min_length=self.min_length, do_sample=False)[0]['summary_text']
-        summary_text = self.translator.translate(text=text, to_lang='vi')
-        return summary_text
+        sum_text = self.summarizer(text, max_length=self.max_length, min_length=self.min_length, do_sample=False)[0]['summary_text']
+        return sum_text
     
-    def summary_news(self, news:str)->str:
-        '''
-        Summary news. Because the news is too long (Loss of Information) so I will split news into 2 parts
-        '''
-        sample = news.split('. ')
-        art1 = '. '.join(sample[:int(len(sample)/2)])
-        art2 = '. '.join(sample[int(len(sample)/2):])
-        sum_art1 = self.summary_text(art1)
-        sum_art2 = self.summary_text(art2)
-        summary_text = f'   {sum_art1}\n    {sum_art2}'
+    def summary_news(self, news:str, chunk_overlap:str = 0)->str:
+
+        text_splitter = TokenTextSplitter(chunk_size=self.max_length * 2,
+                                           chunk_overlap=chunk_overlap)
+        
+        trans_news = self.translator.translate(text=news, to_lang='en')
+        text_chunks = text_splitter.split_text(trans_news)
+        summary_documents = [self.summary_text(chunk) for chunk in text_chunks]
+        summary_text = '\n'.join(summary_documents)
+
+        summary_text = self.translator.translate(text=summary_text, to_lang='vi')
         return summary_text
     
 

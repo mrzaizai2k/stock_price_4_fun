@@ -478,7 +478,7 @@ class TradeScraper:
             update_button.click()
 
         # download the report
-        time.sleep(1)
+        time.sleep(3)
         download_button = self.driver.find_element(By.ID, "imgExcel_CA")
         download_button.click()
 
@@ -545,5 +545,5 @@ def scrape_trading_data(user_name, password):
     scraper.scrape_fpts_trading_log(report_type='TradeLog')
     scraper.scrape_fpts_trading_log(report_type='reportprofitloss')    
     scraper.scrape_fpts_trading_log(report_type='AssetReport2')
-
+    print('Finish scraping financial report!')
     scraper.close_broser() 
