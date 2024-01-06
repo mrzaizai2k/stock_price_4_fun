@@ -24,9 +24,9 @@ times:
 
 scape_trading_data_time: '22:59'
 
-news_summary_time: '6:00'
+news_summary_time: '06:00'
 
-send_news_summary_time: '7:30'
+send_news_summary_time: '07:30'
 
 help_commands_path: 'config/help_command.txt'
 

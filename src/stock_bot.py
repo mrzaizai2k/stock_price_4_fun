@@ -374,6 +374,23 @@ def checklist_button_click(call):
         reply_markup=types.InlineKeyboardMarkup(inline_keyboard),
     )
 
+@bot.message_handler(commands=['summarynewsurl'])
+def ask_for_link(message):
+    # Ask for the stock symbol
+    markup = types.ForceReply(selective = False)
+    bot.reply_to(message, "Please paste the news url for summarization:", reply_markup = markup)
+    bot.register_next_step_handler(message, summary_news_from_links)
+
+
+def summary_news_from_links(message):
+    news_url = message.text
+    news_scraper = NewsScraper()
+    news = news_scraper.take_text_from_link(news_url=news_url)
+    new_summarizer = NewsSummarizer()
+    sum_text = new_summarizer.summary_news(news= news)
+    bot.send_message(message.chat.id, f"Here's your summary news:\n {sum_text}")
+
+
 
 @bot.message_handler(content_types=['audio','voice'])
 def summarize_sound(message):
