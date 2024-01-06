@@ -169,7 +169,6 @@ class NewsScraper:
 
 
 class NewsSummarizer:
-    # test
     def __init__(self, summarizer = pipeline("summarization", model="Falconsai/text_summarization"),
                  translator = GoogleTranslator(),
                  max_length:int=230, 
