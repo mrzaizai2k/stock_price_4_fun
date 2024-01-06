@@ -3,8 +3,7 @@ name: Stock Assistant Bot
 on:
   push:
     branches:
-      - test
-      - main
+      - main2
 
 jobs:
   build:
