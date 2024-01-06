@@ -11,6 +11,7 @@ import schedule
 import time
 import yaml
 from functools import wraps
+import torch
 
 
 def filter_stocks(param):
@@ -45,6 +46,18 @@ def schedule_checker():
     while True:
         schedule.run_pending()
         time.sleep(1)
+
+def take_device():
+    # Check for GPU availability
+    gpu_available = torch.cuda.is_available()
+
+    # Set the device based on availability
+    device = torch.device("cuda" if gpu_available else "cpu")
+
+    # Print the selected device
+    print(f"Selected device: {device}")
+
+    return device
 
 def memoization(func):
     def wrapper(file_path, *args, **kwargs):

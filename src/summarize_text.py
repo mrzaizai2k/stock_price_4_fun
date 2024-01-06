@@ -13,7 +13,7 @@ urllib3.disable_warnings()
 from typing import Literal
 from transformers import pipeline
 from bs4 import BeautifulSoup
-from src.Utils.utils import check_path
+from src.Utils.utils import check_path, take_device
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.document_loaders import (
@@ -58,8 +58,7 @@ class SpeechSummaryProcessor:
     def __init__(self, audio_path: str, whisper_model: Literal['base', 'small'] = 'base', 
                  translator = GoogleTranslator()):
         # Step 1: Initialize the SpeechToTextProcessor
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print('Device', self.device)
+        self.device = take_device()
         self.whisper_model = whisper.load_model(whisper_model, device=self.device)
 
         # Step 2: Load and preprocess the audio
@@ -99,6 +98,7 @@ class SpeechSummaryProcessor:
             return segmented_text
         else:
             return self.translate_to_english(segmented_text)
+
 
 
 class NewsScraper:
@@ -147,6 +147,85 @@ class NewsScraper:
 
         return news_urls
 
+    def search_top_news_cafef(self)-> list:
+
+        url = 'https://cafef.vn/'
+        # Send a GET request to the webpage
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        attemp = 0
+        max_attemps = 3
+        news_urls = []
+
+        while attemp <= max_attemps:
+            try:
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Find top news elements
+                top_news_elements = soup.find_all('div', class_='top_noibat')
+                top_news = top_news_elements[0] if top_news_elements else None
+
+                top_news_links = top_news.find_all('a')
+                # Extract and print the links
+                for link in top_news_links:
+                    news_link = link.get('href')
+                    news_link = f'{url}{news_link}'
+                    news_urls.append(news_link)
+
+                    # Convert set to list
+                    news_urls = list(set(news_urls))
+                break
+                
+            except Exception as e:
+                print(f"An error occurred: {str(e)}")
+                print("Resetting the Scraper in 10 seconds...")
+                time.sleep(10)  
+                attemp += 1
+                if attemp > max_attemps:
+                    print("Max attempts reached. Exiting.")
+                    break
+
+        return news_urls
+    
+    def search_top_news_vnexpress(self)-> list:
+
+        url = 'https://vnexpress.net/kinh-doanh'
+        # Send a GET request to the webpage
+        response = requests.get(url)
+        # Check if the request was successful (status code 200)
+        attemp = 0
+        max_attemps = 3
+        news_urls = []
+
+        while attemp <= max_attemps:
+            try:
+                # Parse the HTML content
+                soup = BeautifulSoup(response.text, 'html.parser')
+
+                # Find news elements
+                news_elements = soup.find_all('h3', class_='title_news')
+                news_elements.append(soup.find('section', class_='section_topstory_folder'))
+
+                # Extract and return the URLs
+                news_urls = [element.find('a').get('href') for element in news_elements if element.find('a')]
+                break
+                
+            except Exception as e:
+                print(f"An error occurred: {str(e)}")
+                print("Resetting the Scraper in 10 seconds...")
+                time.sleep(10)  
+                attemp += 1
+                if attemp > max_attemps:
+                    print("Max attempts reached. Exiting.")
+                    break
+
+        return news_urls
+    
+    def search_top_news(self)-> list:
+        news_urls = self.search_top_news_cafef()
+        news_urls.extend(self.search_top_news_vnexpress())
+        return news_urls
+    
     def take_text_from_link(self, news_url:str) -> str :
         news_url = [news_url]
         loader = NewsURLLoader(urls=news_url, 
@@ -154,10 +233,11 @@ class NewsScraper:
         news_text = loader.load()
         news_text = news_text[0].page_content
         return  news_text
-
+    
 
 class NewsSummarizer:
-    def __init__(self, summarizer = pipeline("summarization", model="Falconsai/text_summarization"),
+    def __init__(self, summarizer = pipeline("summarization", 
+                                             model="Falconsai/text_summarization", device = take_device()),
                  translator = GoogleTranslator(),
                  max_length:int=230, 
                  min_length:int=30,
@@ -169,7 +249,8 @@ class NewsSummarizer:
         
     def summary_text(self,text:str)->str:
         '''Summary short text'''
-        sum_text = self.summarizer(text, max_length=self.max_length, min_length=self.min_length, do_sample=False)[0]['summary_text']
+        sum_text = self.summarizer(text, max_length=self.max_length, 
+                                   min_length=self.min_length, do_sample=False)[0]['summary_text']
         return sum_text
     
     def summary_news(self, news:str, chunk_overlap:str = 0)->str:
