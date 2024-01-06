@@ -322,7 +322,7 @@ def summary_news_daily():
     user_db = UserDatabase(user_data_path=user_data_path)
     all_stocks = user_db.get_all_watchlist()
     stock_news_db = StockNewsDatabase(summary_news_data_path=data.get('summary_news_data_path'))
-    stock_news_db.update_stock_news(watch_list=all_stocks,)
+    stock_news_db.update_news(watch_list=all_stocks,)
 
 
 def send_summary_news():
@@ -332,20 +332,23 @@ def send_summary_news():
     # Schedule the jobs for each day and time
     for user in user_list:
         watchlist = user_db.get_watch_list(user_id=user)
-        summary_news_data_path=data.get('summary_news_data_path')
 
         all_stocks_list = stock_news_db.get_all_stocks()
         common_stocks = list(set(watchlist) & set(all_stocks_list))
 
         summary_news = f"Đây là bản tin tổng hợp hàng ngày"
+        
         for stock in common_stocks:
             news_text, news_url =  stock_news_db.extract_text_for_stock(stock)
             summary_news += f"\nStock: {stock}"
             summary_news += f"\n{news_text}"
             summary_news += f"\nLink: {news_url}"
             summary_news += f"\n-------------"
-            
         bot.send_message(user, summary_news)
+
+        top_news = f"\nTin nổi bật\n"
+        top_news += f"\n{stock_news_db.get_top_news()}"
+        bot.send_message(user, top_news)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('checklist_toggle__'))

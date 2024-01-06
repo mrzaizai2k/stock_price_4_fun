@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from src.Utils.utils import check_path, take_device
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import (
+from langchain_community.document_loaders import (
     NewsURLLoader,
 )
 from unstructured.cleaners.core import clean_extra_whitespace
@@ -267,11 +267,32 @@ class NewsSummarizer:
         return summary_text
     
 
+
 class StockNewsDatabase:
     def __init__(self, summary_news_data_path='data/summary_stock_news.json'):
         self.summary_news_data_path = summary_news_data_path
         self.news_scraper = NewsScraper()
         self.new_summarizer = NewsSummarizer()
+
+    def update_top_news(self):
+        '''Update the top news on schedule'''
+        summary_data = []
+
+        news_list = self.news_scraper.search_top_news()[:5]
+        for news_url in news_list:
+            news = self.news_scraper.take_text_from_link(news_url=news_url)
+            sum_text = self.new_summarizer.summary_news(news=news)
+
+            # Append data to summary_data list
+            summary_data.append({
+                "type": "top_news",
+                "stock": None,
+                "summary_text": sum_text,
+                "news_url": news_url
+            })
+
+        return summary_data
+
 
     def update_stock_news(self, watch_list):
         '''Update the news summary on schedule'''
@@ -285,13 +306,19 @@ class StockNewsDatabase:
 
                 # Append data to summary_data list
                 summary_data.append({
+                    "type": "stock_news",
                     "stock": stock,
                     "summary_text": sum_text,
                     "news_url": news_url
                 })
-
+        return summary_data
+    
+    def update_news(self, watch_list):
+        summary_data = self.update_top_news()
+        summary_data.extend(self.update_stock_news(watch_list=watch_list))
         # Save the summary data to a JSON file
         self._save_summary_data(summary_data)
+
 
     def read_summary_stock_news(self):
         try:
@@ -314,14 +341,32 @@ class StockNewsDatabase:
         print(f"No summary text found for stock: {stock_symbol}")
         return None, None
 
+    def get_top_news(self)-> str:
+        summary_data = self.read_summary_stock_news()
+
+        if summary_data is None:
+            return None
+        
+        top_news = [entry for entry in summary_data if entry["type"] == "top_news"]
+        
+        report = ""
+        for entry in top_news:
+            report += entry["summary_text"] + "\n"
+            report += entry["news_url"] + "\n"
+            report += "----------\n"
+
+        return report
+        
     def get_all_stocks(self):
         summary_data = self.read_summary_stock_news()
 
         if summary_data:
-            all_stocks = set(entry["stock"] for entry in summary_data)
+            # Use a set comprehension to filter out None values
+            all_stocks = {entry["stock"] for entry in summary_data if entry["stock"] is not None}
             return list(all_stocks)
         else:
             return []
+
 
     def _save_summary_data(self, summary_data):
         check_path(self.summary_news_data_path)
