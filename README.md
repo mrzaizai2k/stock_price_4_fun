@@ -38,7 +38,9 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 12. `/buysellanalyze`: Picture of my Buy/Sell of a stock (FPTS data)
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 14. `/watchlist`: See/change your watch list
-15. `/remote`: Open remote tunnel to vscode on my latop. 
+15. `/remote`: Open remote tunnel to vscode on my latop.
+16. `/summarynewsurl`:  Summary news from arbitrary url
+
 
 ## How to Use
 1. Start a command with a forward slash ("/") followed by the desired command.
@@ -79,6 +81,7 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 
 5. **Update Config:**
    - You have to update the config in `config/config.yaml` file. i.e time to warning, data path,...
+   - `.txt` file to save long text like the `/start` or `/help` commands 
 
 5. **Run the Bot:**
    - Execute the following command to run the Mrzaizai2k Stock Assistant Bot:
@@ -94,7 +97,7 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 
 ## Warning Price
 
-   The bot can also warning you about the stock in watchlist in times that you have set in  `config/config.yaml`
+   The bot can also warning you about the stock in watchlist in times that you have set in  `config/config.yaml`. The time would be in format `HH:MM`. Note: '06:50' not '6:50'
 
 1. **`warning_macd` Function:**
    - **Purpose:** This function generates warnings based on MACD (Moving Average Convergence Divergence) analysis for stocks in the provided watchlist.
@@ -127,6 +130,16 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
 2. Scrape data trading: 
    
    The chatbot employs Selenium to scrape trading data from FTPS. The scraped data provides insights into buy/sell periods and facilitates analysis of win/loss trading patterns. The code for this functionality is available in src/trading_record.py. This feature enhances the chatbot's capability to provide valuable trading analytics. The code can be found in `src/trading_record.py`
+
+3. Scrape news:
+
+   The bot has the capability to scrape news specifically related to the stocks on your watchlist. Additionally, it can provide a brief summary of the top news, offering insights into the market before the trading session begins.
+   
+   I have enhanced the crawling functionality using LangChain, allowing the bot to precisely extract news text from any given URL. This improvement ensures accurate and relevant information retrieval.
+   
+   To quickly obtain a summary from a URL, you can utilize the /summarynewsurl command. This feature enhances user convenience and efficiency.
+   
+   Currently, the news data is stored in a json file. However, I am planning to implement an update to MongoDB in the future. This transition aims to improve data management and accessibility.
 
 
 ## Open VScode tunnel 
@@ -168,7 +181,7 @@ I am trying some summarize model but has some withdraws (the model is too big, o
 The bot can also transform your text into to-do list. you can click to toggle the checklist 
 
 ## Summarize News
-The bot can also summarize news for stocks in your watch list. The news database is stored in `data/summary_stock_news.json`. I will update the database to MongoDB
+The bot can also summarize news related to your watchlist stocks and the market. I use a light Falcon model and Langchain for the summarization which help me to get a precise and quick summary from the news
 
 
 ## Example Uses
@@ -182,10 +195,7 @@ Explore practical implementations and demonstrations of the chatbot's functions 
 - [ ] **Update DataBase using PostGreSQL and MongoDB**
 - [ ] **User_ID Encryption**
 - [ ] **Back Testing Bot**
-- [ ] **Summarize Market Hot News**
-- [ ] **Update the GIF demo use cases**
-
-
+- [ ] **Make a youtube video about this bot**
 
 Note: Ensure that you have Python installed on your machine and the necessary permissions to install packages and run scripts.
 
