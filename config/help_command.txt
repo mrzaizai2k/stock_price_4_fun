@@ -15,4 +15,5 @@ Available features:
 - /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
 - /remote: Open remote tunnel to vscode on mrzaizai2k laptop. Can only be used by me!
 - /summarynewsurl: Summary news from arbitrary url
+- /scrape: Manually scraping trading data and news
 - Summarize idea from Audio or Voice into To-Do list

@@ -538,7 +538,7 @@ class TradeScraper:
         df.to_csv(file_name + '.csv', index=False)
         os.remove(html_file_name)
 
-    def close_broser(self):
+    def close_browser(self):
         self.driver.quit()
 
 

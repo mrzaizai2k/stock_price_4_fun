@@ -40,6 +40,8 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 14. `/watchlist`: See/change your watch list
 15. `/remote`: Open remote tunnel to vscode on my latop.
 16. `/summarynewsurl`:  Summary news from arbitrary url
+17. `/scrape`:  Manually scrapinscraping trading data and news
+
 
 
 ## How to Use

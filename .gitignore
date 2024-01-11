@@ -10,3 +10,4 @@ config/config.py
 code
 /model
 /doc
+/logging

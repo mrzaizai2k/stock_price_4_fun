@@ -26,8 +26,10 @@ scape_trading_data_time: '22:59'
 
 news_summary_time: '06:00'
 
-send_news_summary_time: '07:30'
+send_news_summary_time: '10:35'
 
 help_commands_path: 'config/help_command.txt'
 
 start_commands_path: 'config/start_command.txt'
+
+log_file_path: 'logging/out.txt'

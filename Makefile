@@ -4,12 +4,12 @@ install:
 	pip install -r setup.txt
 freeze:
 	pip freeze > setup.txt
+
 bot:
-	python src/stock_bot.py
-bot2:
-	mkdir logging
+	mkdir -p logging
+	rm	-f logging/out.txt
 	touch logging/out.txt
-	python src/stock_bot.py &> logging/out.txt
+	python -u src/stock_bot.py | tee logging/out.txt
 
 test:
 	python src/PayBackTime.py

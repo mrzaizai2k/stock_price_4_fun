@@ -404,7 +404,27 @@ def summary_news_from_links(message):
     sum_text = new_summarizer.summary_news(news= news)
     bot.send_message(message.chat.id, f"Here's your summary news:\n {sum_text}")
 
+@bot.message_handler(commands=['scrape'])
+def scrape_data(message):
+    '''Manually scrape data trading report and update news'''
+    bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
+    scrape_trading_data(user_name = TRADE_USER, password = TRADE_PASS,)
+    bot.send_message(message.chat.id, "Done scraping trading data!")
+    summary_news_daily()
+    bot.send_message(message.chat.id, "Done updating news!")
 
+@bot.message_handler(commands=['log'])
+def send_log(message):
+    log_file_path = data.get('log_file_path')
+    try:
+        # Open the file in binary mode
+        with open(log_file_path, 'rb') as log_file:
+            # Send the file to the user
+            bot.send_document(message.chat.id, log_file)
+    except FileNotFoundError:
+        bot.send_message(message.chat.id, "Log file not found.")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"An error occurred: {e}")
 
 @bot.message_handler(content_types=['audio','voice'])
 def summarize_sound(message):
