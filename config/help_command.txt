@@ -13,7 +13,10 @@ Available features:
 - /watchlist: See/change watch list
 - /winlossanalyze: Analyze my win loss trading for the last 6 months (FPTS data)
 - /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
-- /remote: Open remote tunnel to vscode on mrzaizai2k laptop. Can only be used by me!
 - /summarynewsurl: Summary news from arbitrary url
-- /scrape: Manually scraping trading data and news
 - Summarize idea from Audio or Voice into To-Do list
+---------------
+
+Only me features:
+- /remote: Open remote tunnel to vscode on mrzaizai2k laptop
+- /scrape: Manually scraping trading data and news
