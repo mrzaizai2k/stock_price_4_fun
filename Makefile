@@ -9,7 +9,7 @@ bot:
 	mkdir -p logging
 	rm	-f logging/out.txt
 	touch logging/out.txt
-	python -u src/stock_bot.py | tee logging/out.txt
+	python -u src/stock_bot.py 2>&1 | tee logging/out.txt
 
 test:
 	python src/PayBackTime.py
