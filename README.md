@@ -24,6 +24,7 @@
 Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist you with various stock-related tasks and analyses. Whether you want to calculate the payback time for a stock, find support and resistance levels, or receive warnings about specific market conditions, this bot has you covered.
 
 ## Available Commands
+**Available commands**
 1. `/start`: Initializes the bot and provides a welcome message.
 2. `/help`: Displays a list of available commands and their descriptions.
 3. `/pbt`: Calculates the payback time for a specific stock.
@@ -38,10 +39,12 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 12. `/buysellanalyze`: Picture of my Buy/Sell of a stock (FPTS data)
 13. `/winlossanalyze`: Analyze my Win/Loss trading for the last 6 months (FPTS data)
 14. `/watchlist`: See/change your watch list
-15. `/remote`: Open remote tunnel to vscode on my latop.
-16. `/summarynewsurl`:  Summary news from arbitrary url
-17. `/scrape`:  Manually scrapinscraping trading data and news
+15. `/summarynewsurl`:  Summary news from arbitrary url
 
+**Only me commands**
+1. `/remote`: Open remote tunnel to vscode on my latop.
+2. `/log`: Send the log file.
+3. `/scrape`:  Manually scraping trading data and news
 
 
 ## How to Use
