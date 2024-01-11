@@ -318,11 +318,25 @@ def warning_stock():
                 else:
                     schedule.every().day.at(f"{time_str}").do(func, bot=bot , watchlist=watchlist, user_id=user)
 
-def summary_news_daily():
+def summary_news_daily(max_retries=3, wait_time=60):
+    retries = 0
     user_db = UserDatabase(user_data_path=user_data_path)
     all_stocks = user_db.get_all_watchlist()
     stock_news_db = StockNewsDatabase(summary_news_data_path=data.get('summary_news_data_path'))
-    stock_news_db.update_news(watch_list=all_stocks,)
+    
+    while retries < max_retries:
+        try:
+            stock_news_db.update_news(watch_list=all_stocks)
+            print('Finish updating daily news summary!')
+            break  # If successful, exit the loop
+        except Exception as e:
+            print(f"Error: {e}")
+            print(f"Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+            retries += 1
+    else:
+        print(f"Max retries reached. Unable to update daily news summary after {max_retries} attempts.")
+
 
 
 def send_summary_news():
@@ -422,7 +436,7 @@ def echo(message):
 def main():
 
     warning_stock()
-    schedule.every().day.at(data.get('scape_trading_data_time')).do(scrape_trading_data, user_name = TRADE_USER, password = TRADE_PASS)
+    schedule.every().day.at(data.get('scape_trading_data_time')).do(scrape_trading_data, user_name = TRADE_USER, password = TRADE_PASS,)
     schedule.every().day.at(data.get('news_summary_time')).do(summary_news_daily)
     schedule.every().day.at(data.get('send_news_summary_time')).do(send_summary_news)
 
