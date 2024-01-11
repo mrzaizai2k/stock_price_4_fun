@@ -6,6 +6,11 @@ freeze:
 	pip freeze > setup.txt
 bot:
 	python src/stock_bot.py
+bot2:
+	mkdir logging
+	touch logging/out.txt
+	python src/stock_bot.py &> logging/out.txt
+
 test:
 	python src/PayBackTime.py
 	python src/motif.py
