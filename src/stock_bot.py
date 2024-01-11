@@ -410,6 +410,9 @@ def summary_news_from_links(message):
 @bot.message_handler(commands=['scrape'])
 def scrape_data(message):
     '''Manually scrape data trading report and update news'''
+    if not validate_mrzaizai2k_user(message.chat.id):
+        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        return
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     scrape_trading_data(user_name = TRADE_USER, password = TRADE_PASS,)
     bot.send_message(message.chat.id, "Done scraping trading data!")
