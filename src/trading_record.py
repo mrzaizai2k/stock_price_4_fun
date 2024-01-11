@@ -22,6 +22,8 @@ from datetime import datetime,timedelta
 from typing import Literal, Optional
 
 from bs4 import BeautifulSoup
+from requests.exceptions import ConnectionError
+
 
 
 from selenium import webdriver
@@ -540,10 +542,22 @@ class TradeScraper:
         self.driver.quit()
 
 
-def scrape_trading_data(user_name, password):
+def scrape_trading_data(user_name, password, max_retries=3, wait_time=60):
+    retries = 0
     scraper = TradeScraper(user_name, password)
-    scraper.scrape_fpts_trading_log(report_type='TradeLog')
-    scraper.scrape_fpts_trading_log(report_type='reportprofitloss')    
-    scraper.scrape_fpts_trading_log(report_type='AssetReport2')
-    print('Finish scraping financial report!')
-    scraper.close_broser() 
+
+    while retries < max_retries:
+        try:
+            scraper.scrape_fpts_trading_log(report_type='TradeLog')
+            scraper.scrape_fpts_trading_log(report_type='reportprofitloss')    
+            scraper.scrape_fpts_trading_log(report_type='AssetReport2')
+            print('Finish scraping financial report!')
+            scraper.close_browser()
+            break  # If successful, exit the loop
+        except ConnectionError as e:
+            print(f"Error: {e}")
+            print(f"Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+            retries += 1
+    else:
+        print(f"Max retries reached. Unable to establish a connection after {max_retries} attempts.")
