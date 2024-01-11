@@ -20,3 +20,4 @@ Available features:
 Only me features:
 - /remote: Open remote tunnel to vscode on mrzaizai2k laptop
 - /scrape: Manually scraping trading data and news
+- /log: Send the log file
