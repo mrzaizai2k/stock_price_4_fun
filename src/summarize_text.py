@@ -79,7 +79,7 @@ class SpeechSummaryProcessor:
         segments = result['segments']
         segmented_text = ''
 
-        for idx, segment in enumerate(segments):
+        for segment in segments:
             segment_text = segment['text']
             segmented_text += f'{segment_text}\n'
         return segmented_text
