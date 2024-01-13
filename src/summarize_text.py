@@ -8,6 +8,7 @@ import time
 import random
 import json
 import urllib3
+import ast
 
 urllib3.disable_warnings()
 from typing import Literal
@@ -22,6 +23,43 @@ from langchain_community.document_loaders import (
 from unstructured.cleaners.core import clean_extra_whitespace
 from langchain.text_splitter import TokenTextSplitter
 
+from langchain_community.llms import CTransformers
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
+
+
+class SeperateTaskPrompt:
+    def __init__(self, template_path:str = 'config/seperate_task_template.txt', ):
+
+        self.template_path = template_path
+        with open(self.template_path, 'r') as file:
+            self.template = file.read()
+        self.load_llm()
+        self.prompt = PromptTemplate(template=self.template, input_variables=['question'])
+        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.llm)
+
+    def load_llm(self):
+        self.llm = CTransformers(
+            model='TheBloke/Llama-2-7B-Chat-GGML', 
+            model_file='llama-2-7b-chat.ggmlv3.q4_1.bin',
+            max_new_tokens=512,
+            temperature=0.5,
+            reset = True,
+            seed = 42, 
+            )
+    
+    def get_response(self, text) -> list:
+        response = self.llm_chain(text) #return dict of question and answer text
+        response = self.get_tasks_from_string(text = response['text'])
+        return response
+
+    def get_tasks_from_string(self, text:str) -> list:
+        # Find the substring between '[' and ']'
+        start_index = text.find('[')
+        end_index = text.find(']') + 1
+        list_string = text[start_index:end_index]
+        task_list = ast.literal_eval(list_string)
+        return task_list
     
 class GoogleTranslator:
     def __init__(self):
@@ -55,8 +93,11 @@ class SpeechSummaryProcessor:
     audio =  # Make sure you upload the audio file (mp3,wav,m4a) into the session storage!
     model = "base" #possible options are 'tiny', 'base', 'small', 'medium', and 'large'
     '''
-    def __init__(self, audio_path: str, whisper_model: Literal['base', 'small'] = 'base', 
-                 translator = GoogleTranslator()):
+    def __init__(self, audio_path: str, 
+                 whisper_model: Literal['base', 'small'] = 'base', 
+                 translator = GoogleTranslator(), 
+                 task_seperator = SeperateTaskPrompt()):
+        
         # Step 1: Initialize the SpeechToTextProcessor
         self.device = take_device()
         self.whisper_model = whisper.load_model(whisper_model, device=self.device)
@@ -65,6 +106,7 @@ class SpeechSummaryProcessor:
         self.audio_path = audio_path
         self.audio = whisper.load_audio(audio_path)
         self.translator = translator
+        self.task_seperator = task_seperator
 
     def transcibe_text_from_sound(self):
         # Step 3: Perform speech-to-text conversion
@@ -74,16 +116,21 @@ class SpeechSummaryProcessor:
         self.language = self.result['language']
         return self.result, self.language
 
-    def segment_text(self, result):
+    def segment_text(self, result) -> str:
         # Step 4: Segment the transcribed text
         segments = result['segments']
-        
-        segmented_text = ''
-
-        for segment in segments:
-            segment_text = segment['text']
-            segmented_text += f'{segment_text}\n'
-        segmented_text.replace('. ', '\n')    
+        # Join the segment texts into one string
+        segmented_text = '.'.join(segment['text'] for segment in segments)
+        try:
+            # Send the joined text to self.task_seperator.get_response() to get a list
+            response_list = self.task_seperator.get_response(text=segmented_text)
+            # Separate the received list by newline
+            segmented_text = '\n'.join(response_list)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            segmented_text = re.sub(r'[\.,\n]', '\n', segmented_text)  # Replace dots, commas, and newlines with newlines
+            segmented_text = segmented_text.replace(' and ', '\n')  # Replace 'and' with newlines separate
+            
         return segmented_text
 
     def translate_to_english(self, text, to_lang='en'):
@@ -391,3 +438,8 @@ if __name__ == "__main__":
     print('sum_text', sum_text)
     news_db = StockNewsDatabase()
     print(news_db.get_all_stocks())
+
+    text = "I have to go to the gym at 9, and figure out the power of 2, I have to call my parent at 6 in my house, and do my homework with james"
+    seperator = SeperateTaskPrompt()
+    task_lists = seperator.get_response(text)
+    print(task_lists)
