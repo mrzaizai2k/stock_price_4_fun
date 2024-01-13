@@ -12,7 +12,15 @@ import time
 import yaml
 from functools import wraps
 import torch
+from src.Microsofttodo import *
 
+def sync_task_to_todo(text:str):
+    todo = MicrosoftToDo()
+    # Split the text by '\n' and create a list
+    task_list = text.split('\n')
+    for task in task_list:
+        todo.create_task(task_name=str(task), list_name='Tasks')
+    return
 
 def filter_stocks(param):
     df = stock_screening_insights(param, size=1700, drop_lang='vi')

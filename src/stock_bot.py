@@ -455,7 +455,11 @@ def summarize_sound(message):
 
     reply_markup = handle_checklist(text)
     bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
-  
+
+    if validate_mrzaizai2k_user(message.chat.id):
+        sync_task_to_todo(text)
+        bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
+        return
     os.remove(file_path)
 
 # Define the function to handle all other messages

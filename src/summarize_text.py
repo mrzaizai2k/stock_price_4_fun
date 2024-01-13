@@ -81,7 +81,7 @@ class SpeechSummaryProcessor:
 
         for idx, segment in enumerate(segments):
             segment_text = segment['text']
-            segmented_text += f'{idx + 1}: {segment_text}\n'
+            segmented_text += f'{segment_text}\n'
         return segmented_text
 
     def translate_to_english(self, text, to_lang='en'):
