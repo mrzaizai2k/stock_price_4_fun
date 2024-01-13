@@ -77,11 +77,13 @@ class SpeechSummaryProcessor:
     def segment_text(self, result):
         # Step 4: Segment the transcribed text
         segments = result['segments']
+        
         segmented_text = ''
 
         for segment in segments:
             segment_text = segment['text']
             segmented_text += f'{segment_text}\n'
+        segmented_text.replace('. ', '\n')    
         return segmented_text
 
     def translate_to_english(self, text, to_lang='en'):

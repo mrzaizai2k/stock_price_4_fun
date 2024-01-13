@@ -25,6 +25,7 @@ click==8.1.7
 comm==0.1.4
 contourpy==1.2.0
 cssselect==1.2.0
+ctransformers==0.2.27
 cycler==0.12.1
 dataclasses-json==0.6.3
 debugpy==1.8.0
@@ -143,6 +144,7 @@ prompt-toolkit==3.0.39
 psutil==5.9.6
 ptyprocess==0.7.0
 pure-eval==0.2.2
+py-cpuinfo==9.0.0
 py-trello==0.19.0
 py-vncorenlp==0.1.4
 pycparser==2.21
