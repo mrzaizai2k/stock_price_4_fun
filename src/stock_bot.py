@@ -450,17 +450,23 @@ def summarize_sound(message):
         new_file.write(downloaded_file)
 
     speech_to_text = SpeechSummaryProcessor(audio_path=file_path)
-    text = speech_to_text.generate_speech_to_text()
-    bot.reply_to(message, f"Here's your note:\n {text}")
+    try:
+        text = speech_to_text.generate_speech_to_text()
+        bot.reply_to(message, f"Here's your note:\n {text}")
 
-    reply_markup = handle_checklist(text)
-    bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
+        reply_markup = handle_checklist(text)
+        bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
 
-    if validate_mrzaizai2k_user(message.chat.id):
-        sync_task_to_todo(text)
-        bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
-        return
-    os.remove(file_path)
+        if validate_mrzaizai2k_user(message.chat.id):
+            sync_task_to_todo(text)
+            bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
+            return
+        os.remove(file_path)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        bot.send_message(message.chat.id, f"Error in voice processing")
+        os.remove(file_path)
+
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
