@@ -14,6 +14,16 @@ from functools import wraps
 import torch
 from src.Microsofttodo import *
 
+def create_env_file():
+    env_file_path = '.env'
+    if not os.path.isfile(env_file_path):
+        with open(env_file_path, 'w') as env_file:
+            env_file.write('TELEBOT_API=\n')
+            env_file.write('TRADE_USER=\n')
+            env_file.write('TRADE_PASS=\n')
+            env_file.write('YOUR_TELEGRAM_ID=\n')
+
+
 def sync_task_to_todo(text:str):
     todo = MicrosoftToDo()
     # Split the text by '\n' and create a list
