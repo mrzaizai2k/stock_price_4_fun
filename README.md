@@ -181,12 +181,28 @@ To setup Whisper
 
 Then I use Google Translate API to translate the text to English. All the code can be found `src/summarize_text.py`
 
-I am trying some summarize model but has some withdraws (the model is too big, or too dump)
+The bot can also transform your text into to-do list using model [TheBloke/Llama-2-7B-Chat-GGML](https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML)
 
-The bot can also transform your text into to-do list. you can click to toggle the checklist 
+      Input: "I want to go shoppng at 8 o'clock and call my parents tomorrow"
+      Output: ["Go shopping at 8 o'clock", "Call my parents tomorrow"]
+
+It has the capability to understand and fix tasks, such as when you mention a task incorrectly and want to correct it. For example:
+
+      Input: "I want to go shopping at 8 o'clock, uhm, I'm sorry, at 9 o'clock."
+      Output: ["Go shopping at 9 o'clock."]
+
+Personally, I use the Microsoft To Do app, so the bot syncs those tasks to my app! The information can be found in [tod0](https://github.com/kiblee/tod0/tree/master).
+
+The `tod0` package is originally designed for CLI usage. However, I have modified it for my personal usage in Python. The source code can be found in `src/Microsofttodo.py`. Remeber to take the token and client_id as this [link](https://github.com/kiblee/tod0/blob/master/GET_KEY.md)
+
 
 ## Summarize News
-The bot can also summarize news related to your watchlist stocks and the market. I use a light Falcon model and Langchain for the summarization which help me to get a precise and quick summary from the news
+
+The bot has the capability to summarize news related to your watchlist stocks and the market. I utilize a lightweight [Falconsai/text_summarization](https://huggingface.co/Falconsai/text_summarization) model and Langchain for summarization, enabling me to obtain a precise and swift summary from the news.
+
+I leveraged [Langchain](https://github.com/langchain-ai/langchain) and the `beautifulsoup` package to crawl top news and news related to your stocks from two sites: [Cafef](https://cafef.vn) and [VnExpress](https://vnexpress.net), bringing you the summary of the market trend.
+
+If you prefer a more direct approach, simply use the command `/summarynewsurl` and paste the URL link. This will provide you with a summary of any site you desire.
 
 
 ## Example Uses
@@ -196,6 +212,8 @@ Explore practical implementations and demonstrations of the chatbot's functions 
 
 ## To-Do List
 
+- [ ] **Update some features with langchain**
+- [ ] **Upgrade the security**
 - [ ] **Stock Prediction with TFT Model**
 - [ ] **Update DataBase using PostGreSQL and MongoDB**
 - [ ] **User_ID Encryption**
