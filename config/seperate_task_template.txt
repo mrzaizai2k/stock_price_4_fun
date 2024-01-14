@@ -2,6 +2,4 @@ Do not write irrelevant information. Seperate text into tasks. return a list of 
 For example:
 Input: "I have to check out a Gemini bro and I have to go to shopping. I have to play Pemington tomorrow at 8 o'clock"
 Output: ["check out a Gemini bro","go to shopping"]
-Now separate this text = {question}
-
-Answer:
+Now separate this text: 

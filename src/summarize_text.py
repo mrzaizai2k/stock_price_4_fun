@@ -26,6 +26,8 @@ from langchain.text_splitter import TokenTextSplitter
 from langchain_community.llms import CTransformers
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
+from ctransformers import AutoModelForCausalLM, AutoTokenizer
+
 
 
 class SeperateTaskPrompt:
@@ -35,22 +37,26 @@ class SeperateTaskPrompt:
         with open(self.template_path, 'r') as file:
             self.template = file.read()
         self.load_llm()
-        self.prompt = PromptTemplate(template=self.template, input_variables=['question'])
-        self.llm_chain = LLMChain(prompt=self.prompt, llm=self.llm)
+        # self.prompt = PromptTemplate(template=self.template, input_variables=['question'])
+        # self.llm_chain = LLMChain(prompt=self.prompt, llm=self.llm)
 
     def load_llm(self):
-        self.llm = CTransformers(
-            model='TheBloke/Llama-2-7B-Chat-GGML', 
+        
+        self.llm = AutoModelForCausalLM.from_pretrained(model_path_or_repo_id='TheBloke/Llama-2-7B-Chat-GGML', 
             model_file='llama-2-7b-chat.ggmlv3.q4_1.bin',
             max_new_tokens=512,
             temperature=0.5,
             reset = True,
             seed = 42, 
-            )
-    
+            gpu_layers=50)
+        
+
     def get_response(self, text) -> list:
-        response = self.llm_chain(text) #return dict of question and answer text
-        response = self.get_tasks_from_string(text = response['text'])
+        # response = self.llm_chain(text) #return dict of question and answer text
+        # response = self.get_tasks_from_string(text = response['text'])
+        response = self.llm(f"{self.template}: {text}")
+        # print('raw', response)
+        response = self.get_tasks_from_string(response)
         return response
 
     def get_tasks_from_string(self, text:str) -> list:
@@ -60,7 +66,8 @@ class SeperateTaskPrompt:
         list_string = text[start_index:end_index]
         task_list = ast.literal_eval(list_string)
         return task_list
-    
+
+
 class GoogleTranslator:
     def __init__(self):
         pass
