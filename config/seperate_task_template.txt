@@ -1,5 +1,5 @@
-Do not write irrelevant information. Seperate text into tasks. return a list of tasks
+Do not write irrelevant information. Seperate text into tasks. return a list of tasks which remain places and time
 For example:
-Input: "I have to check out a Gemini bro and I have to go to shopping. I have to play Pemington tomorrow at 8 o'clock"
-Output: ["check out a Gemini bro","go to shopping"]
+Input: "I have to check out a Gemini bro and I have to go to shopping at the market. I have to play badminton tomorrow at 8 o'clock"
+Output: ["check out a Gemini bro", "go to shopping at the market", "play badminton tomorrow at 8 o'clock"]
 Now separate this text: 
