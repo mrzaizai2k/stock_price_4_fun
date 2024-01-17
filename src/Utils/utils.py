@@ -30,6 +30,7 @@ def sync_task_to_todo(text:str):
     task_list = text.split('\n')
     for task in task_list:
         todo.create_task(task_name=str(task), list_name='Tasks')
+        time.sleep(1)
     return
 
 def filter_stocks(param):

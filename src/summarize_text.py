@@ -9,6 +9,9 @@ import random
 import json
 import urllib3
 import ast
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 urllib3.disable_warnings()
 from typing import Literal
@@ -27,6 +30,7 @@ from langchain_community.llms import CTransformers
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from ctransformers import AutoModelForCausalLM, AutoTokenizer
+from langchain_openai import OpenAI
 
 
 
@@ -42,14 +46,19 @@ class SeperateTaskPrompt:
 
     def load_llm(self):
         
-        self.llm = AutoModelForCausalLM.from_pretrained(model_path_or_repo_id='TheBloke/Llama-2-7B-Chat-GGML', 
-            model_file='llama-2-7b-chat.ggmlv3.q4_1.bin',
-            max_new_tokens=512,
-            temperature=0.5,
-            reset = True,
-            seed = 42, 
-            gpu_layers=50)
-        
+        # self.llm = AutoModelForCausalLM.from_pretrained(model_path_or_repo_id='TheBloke/Llama-2-7B-Chat-GGML', 
+        #     model_file='llama-2-7b-chat.ggmlv3.q4_1.bin',
+        #     max_new_tokens=512,
+        #     temperature=0.5,
+        #     reset = True,
+        #     seed = 42, 
+        #     gpu_layers=50)
+        OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+        self.llm = OpenAI(openai_api_key=OPENAI_API_KEY, 
+                          max_tokens = 512,
+                          temperature=0.5,
+                          )
+
 
     def get_response(self, text) -> list:
         # response = self.llm_chain(text) #return dict of question and answer text

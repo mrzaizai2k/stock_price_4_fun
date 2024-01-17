@@ -1,5 +1,7 @@
-Do not write irrelevant information. Seperate text into tasks. return a list of tasks which remain places and time
+Do not write irrelevant information. Summary, fix and Break down text into tasks. return a list of tasks which remain places and time
 For example:
-Input: "I have to check out a Gemini bro and I have to go to shopping at the market. I have to play badminton tomorrow at 8 o'clock"
+Input: "remind me that I have to check out a Gemini bro and I have to go to shopping at the market. I have to play badminton tomorrow at 8 o'clock"
 Output: ["check out a Gemini bro", "go to shopping at the market", "play badminton tomorrow at 8 o'clock"]
-Now separate this text: 
+Input: "I go shopping at 8am and do homework at 6, call parents tomorrow. remind me to check my account if I done do my homework. I also want to play badminton in the stadium at 12PM with Lan, ah sorry at 11 PM"
+Output: ['go shopping at 8 am', 'do homework at 6', 'call parents tomorrow','check account if homework is done','play badminton in the stadium at 11PM with Lan']
+Now separate this text:
