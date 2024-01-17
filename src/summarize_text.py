@@ -31,7 +31,7 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from ctransformers import AutoModelForCausalLM, AutoTokenizer
 from langchain_openai import OpenAI
-
+from datetime import datetime
 
 
 class SeperateTaskPrompt:
@@ -41,29 +41,21 @@ class SeperateTaskPrompt:
         with open(self.template_path, 'r') as file:
             self.template = file.read()
         self.load_llm()
-        # self.prompt = PromptTemplate(template=self.template, input_variables=['question'])
+        # self.prompt = PromptTemplate(template=self.template, input_variables=['date', 'question'])
         # self.llm_chain = LLMChain(prompt=self.prompt, llm=self.llm)
 
     def load_llm(self):
-        
-        # self.llm = AutoModelForCausalLM.from_pretrained(model_path_or_repo_id='TheBloke/Llama-2-7B-Chat-GGML', 
-        #     model_file='llama-2-7b-chat.ggmlv3.q4_1.bin',
-        #     max_new_tokens=512,
-        #     temperature=0.5,
-        #     reset = True,
-        #     seed = 42, 
-        #     gpu_layers=50)
         OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
         self.llm = OpenAI(openai_api_key=OPENAI_API_KEY, 
                           max_tokens = 512,
-                          temperature=0.5,
+                          temperature=0.7,
+                          
                           )
-
-
+        
     def get_response(self, text) -> list:
-        # response = self.llm_chain(text) #return dict of question and answer text
-        # response = self.get_tasks_from_string(text = response['text'])
-        response = self.llm(f"{self.template}: {text}")
+
+        tmp_prompt = f"{self.template}\n Now at {datetime.now()}, please break down this text: {text}"
+        response = self.llm(tmp_prompt)
         # print('raw', response)
         response = self.get_tasks_from_string(response)
         return response
@@ -72,9 +64,9 @@ class SeperateTaskPrompt:
         # Find the substring between '[' and ']'
         start_index = text.find('[')
         end_index = text.find(']') + 1
-        list_string = text[start_index:end_index]
-        task_list = ast.literal_eval(list_string)
-        return task_list
+        json_string = text[start_index:end_index]
+        tasks_list = eval(json_string)
+        return tasks_list
 
 
 class GoogleTranslator:
@@ -139,9 +131,11 @@ class SpeechSummaryProcessor:
         segmented_text = '.'.join(segment['text'] for segment in segments)
         try:
             # Send the joined text to self.task_seperator.get_response() to get a list
-            response_list = self.task_seperator.get_response(text=segmented_text)
+            self.response_list = self.task_seperator.get_response(text=segmented_text)
             # Separate the received list by newline
-            segmented_text = '\n'.join(response_list)
+            titles = [task['title'] for task in self.response_list]
+            # Join titles into a single string with newline separator
+            segmented_text = '\n'.join(titles)
         except Exception as e:
             print(f"An error occurred: {str(e)}")
             segmented_text = re.sub(r'[\.,\n]', '\n', segmented_text)  # Replace dots, commas, and newlines with newlines
@@ -163,6 +157,9 @@ class SpeechSummaryProcessor:
             return segmented_text
         else:
             return self.translate_to_english(segmented_text)
+        
+    def get_task_list(self):
+        return self.response_list
 
 
 

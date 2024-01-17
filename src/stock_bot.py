@@ -454,19 +454,27 @@ def summarize_sound(message):
         new_file.write(downloaded_file)
 
     speech_to_text = SpeechSummaryProcessor(audio_path=file_path)
-   
-    text = speech_to_text.generate_speech_to_text()
-    print('voice', text)
-    bot.reply_to(message, f"Here's your note:\n {text}")
+    
+    try:
+        text = speech_to_text.generate_speech_to_text()
+        print('voice', text)
+        bot.reply_to(message, f"Here's your note:\n {text}")
+    except Exception as e:
+        print('Error', e)
+        bot.reply_to(message, f"Sorry, I can't understand your voice. Please try again!")
+
+    os.remove(file_path)
 
     reply_markup = handle_checklist(text)
     bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
 
+    tasks_list = speech_to_text.get_task_list()
+    print('tasks_list', tasks_list)
     if validate_mrzaizai2k_user(message.chat.id):
-        sync_task_to_todo(text)
+        sync_task_to_todo(tasks_list)
         bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
         
-    os.remove(file_path)
+    
    
 
 

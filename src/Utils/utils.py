@@ -24,13 +24,12 @@ def create_env_file():
             env_file.write('YOUR_TELEGRAM_ID=\n')
 
 
-def sync_task_to_todo(text:str):
+def sync_task_to_todo(tasks_list:list[dict]):
     todo = MicrosoftToDo()
     # Split the text by '\n' and create a list
-    task_list = text.split('\n')
-    for task in task_list:
-        todo.create_task(task_name=str(task), list_name='Tasks')
-        time.sleep(1)
+    for tmp in tasks_list:
+        todo.create_task(task_name=tmp["title"], list_name='Tasks', 
+                         importance=tmp["important"], dueDateTime=tmp["dueDateTime"])
     return
 
 def filter_stocks(param):

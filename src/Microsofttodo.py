@@ -168,6 +168,7 @@ class TaskNotFoundByIndex(Exception):
         )
         super(TaskNotFoundByIndex, self).__init__(self.message)
 
+
 class MicrosoftToDo:
     def __init__(self) -> None:
         pass
@@ -233,29 +234,6 @@ class MicrosoftToDo:
             }
             new_response.append(new_task)
         return new_response
-
-    def create_task(self,
-                        task_name: str,
-                        list_name: str = None,
-                        list_id: str = None,
-                        reminder_datetime: datetime = None,
-                    ):
-        assert (list_name is not None) or (
-            list_id is not None
-        ), "You must provide list_name or list_id"
-
-        # For compatibility with cli
-        if list_id is None:
-            list_id = self.get_list_id_by_name(list_name)
-
-        endpoint = f"{BASE_URL}/{list_id}/tasks"
-        request_body = {
-            "title": task_name,
-            "reminderDateTime": datetime_to_api_timestamp(reminder_datetime),
-        }
-        session = get_oauth_session()
-        response = session.post(endpoint, json=request_body)
-        return True if response.ok else response.raise_for_status()
 
 
     def complete_task(self,
@@ -326,3 +304,43 @@ class MicrosoftToDo:
         #        raise TaskNotFoundByIndex(task_list_position, list_name)
         else:
             raise
+
+    def create_task(self,
+                        task_name: str,
+                        list_name: str = None,
+                        list_id: str = None,
+                        importance:bool = False,
+                        dueDateTime: datetime = None,
+                        body=None,
+                    ):
+        assert (list_name is not None) or (
+            list_id is not None
+        ), "You must provide list_name or list_id"
+
+        # For compatibility with cli
+        if list_id is None:
+            list_id = self.get_list_id_by_name(list_name)
+
+        if body is None:
+            body ={"content": task_name,
+                    "contentType": "text"
+                    }
+        
+        if dueDateTime is not None:
+            dueDateTime = datetime.strptime(dueDateTime, '%Y-%m-%d:%H:%M:%S')
+        
+        if importance == False:
+            importance = 'normal'
+        else:
+            importance = 'high'
+        
+        endpoint = f"{BASE_URL}/{list_id}/tasks"
+        request_body = {
+            "title": task_name,
+            "body":body,
+            "importance": importance,
+            "dueDateTime": datetime_to_api_timestamp(dueDateTime),
+        }
+        session = get_oauth_session()
+        response = session.post(endpoint, json=request_body)
+        return True if response.ok else response.raise_for_status()
