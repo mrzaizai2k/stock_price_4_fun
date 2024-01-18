@@ -140,8 +140,12 @@ class SpeechSummaryProcessor:
             print(f"An error occurred: {str(e)}")
             segmented_text = re.sub(r'[\.,\n]', '\n', segmented_text)  # Replace dots, commas, and newlines with newlines
             segmented_text = segmented_text.replace(' and ', '\n')  # Replace 'and' with newlines separate
+            self.create_response_list()
             
         return segmented_text
+
+    def create_response_list(self):
+        self.response_list = None
 
     def translate_to_english(self, text, to_lang='en'):
         # Step 5: Translate the text to English

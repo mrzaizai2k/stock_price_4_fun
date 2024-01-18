@@ -27,9 +27,9 @@ def create_env_file():
 def sync_task_to_todo(tasks_list:list[dict]):
     todo = MicrosoftToDo()
     # Split the text by '\n' and create a list
-    for tmp in tasks_list:
-        todo.create_task(task_name=tmp["title"], list_name='Tasks', 
-                         importance=tmp["important"], dueDateTime=tmp["dueDateTime"])
+    for task in tasks_list:
+        todo.create_task(task_name=task["title"], list_name='Tasks', 
+                         importance=task["important"], dueDateTime=task["dueDateTime"])
     return
 
 def filter_stocks(param):

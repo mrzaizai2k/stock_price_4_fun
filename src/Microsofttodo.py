@@ -306,12 +306,13 @@ class MicrosoftToDo:
             raise
 
     def create_task(self,
-                        task_name: str,
-                        list_name: str = None,
-                        list_id: str = None,
-                        importance:bool = False,
-                        dueDateTime: datetime = None,
-                        body=None,
+                    task_name: str,
+                    list_name: str = None,
+                    list_id: str = None,
+                    importance:bool = False,
+                    dueDateTime: datetime = None,
+                    body=None,
+                    reminder_datetime: datetime = None,
                     ):
         assert (list_name is not None) or (
             list_id is not None
@@ -320,26 +321,26 @@ class MicrosoftToDo:
         # For compatibility with cli
         if list_id is None:
             list_id = self.get_list_id_by_name(list_name)
+        
+        if dueDateTime is not None:
+            dueDateTime = datetime.strptime(dueDateTime, '%Y-%m-%d:%H:%M:%S')
+            if reminder_datetime is None:
+                reminder_datetime = dueDateTime
+        
+        importance = 'high' if importance else 'normal'
 
         if body is None:
             body ={"content": task_name,
                     "contentType": "text"
                     }
-        
-        if dueDateTime is not None:
-            dueDateTime = datetime.strptime(dueDateTime, '%Y-%m-%d:%H:%M:%S')
-        
-        if importance == False:
-            importance = 'normal'
-        else:
-            importance = 'high'
-        
+
         endpoint = f"{BASE_URL}/{list_id}/tasks"
         request_body = {
             "title": task_name,
             "body":body,
             "importance": importance,
             "dueDateTime": datetime_to_api_timestamp(dueDateTime),
+            "reminderDateTime": datetime_to_api_timestamp(reminder_datetime),
         }
         session = get_oauth_session()
         response = session.post(endpoint, json=request_body)

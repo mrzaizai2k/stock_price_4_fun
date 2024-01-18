@@ -461,22 +461,23 @@ def summarize_sound(message):
         bot.reply_to(message, f"Here's your note:\n {text}")
     except Exception as e:
         print('Error', e)
+        text = None
         bot.reply_to(message, f"Sorry, I can't understand your voice. Please try again!")
 
     os.remove(file_path)
-
+    if text is None:
+        return
+    
     reply_markup = handle_checklist(text)
     bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
-
     tasks_list = speech_to_text.get_task_list()
     print('tasks_list', tasks_list)
-    if validate_mrzaizai2k_user(message.chat.id):
+    
+    if tasks_list is not None and validate_mrzaizai2k_user(message.chat.id):
         sync_task_to_todo(tasks_list)
         bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
-        
     
    
-
 
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
