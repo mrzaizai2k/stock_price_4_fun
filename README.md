@@ -190,8 +190,10 @@ It has the capability to understand and fix tasks, such as when you mention a ta
 
       Input: "I want to go shopping at 8 o'clock, uhm, I'm sorry, at 9 o'clock."
       Output: ["Go shopping at 9 o'clock."]
+      
+Update: I have uoadted the model to chatgpt turbo 3.5 Instruct to get better result in no time!
 
-Personally, I use the Microsoft To Do app, so the bot syncs those tasks to my app! The information can be found in [tod0](https://github.com/kiblee/tod0/tree/master).
+Personally, I use the Microsoft To Do app, so the bot will sync those tasks to my app! The information can be found in [tod0](https://github.com/kiblee/tod0/tree/master).
 
 The `tod0` package is originally designed for CLI usage. However, I have modified it for my personal usage in Python. The source code can be found in `src/Microsofttodo.py`. Remeber to take the token and client_id as this [link](https://github.com/kiblee/tod0/blob/master/GET_KEY.md)
 
@@ -219,6 +221,7 @@ Explore practical implementations and demonstrations of the chatbot's functions 
 - [ ] **User_ID Encryption**
 - [ ] **Back Testing Bot**
 - [ ] **Make a youtube video about this bot**
+- [ ] **Update to do list function**
 
 Note: Ensure that you have Python installed on your machine and the necessary permissions to install packages and run scripts.
 
