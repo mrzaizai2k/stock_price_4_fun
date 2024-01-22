@@ -457,7 +457,7 @@ def summarize_sound(message):
     
     try:
         text = speech_to_text.generate_speech_to_text()
-        print('voice', text)
+        print(f'Original voice:\n {text}')
         bot.reply_to(message, f"Here's your note:\n {text}")
     except Exception as e:
         print('Error', e)

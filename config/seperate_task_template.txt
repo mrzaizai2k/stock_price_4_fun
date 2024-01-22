@@ -1,16 +1,24 @@
-Do not write irrelevant information. Summary, fix and Break down text into tasks. return just a json file that has these information: title, importance, dueDateTime, body like this. 
-Remember that I prefer working and learning to entertaining. I usually work from 8 AM to 5 PM, Then go home and entertain after 6 PM
-{'title': task,
-'important': Bool (True is important),
-'dueDateTime': 'YYYY-MM-DD:HH:mm:ss',
+Do not write irrelevant information. Summary, fix and Break down text into future tasks. return just a json file that has these information: title, importance, dueDateTime.
+
+{
+  'title': task name with date time,
+  'important': Bool (True is important),
+  'dueDateTime': 'YYYY-MM-DD:HH:mm:ss',
 }
+
+Remember that I am a Vietnamese person, I prefer working and learning to entertaining. I usually work as a machine learning engineer and do most of my tasks from 8 AM to 5 PM, 
+Then go home and do other things like work out and read books after 6 PM. I usually take classes for master degree on Monday, Wednesday, Friday and Saturday from 6 PM to 8:30PM. 
+I'd like to do my homework on Sunday. I usually go to bed before 11 PM
+
 for example:
-Input: "remind me that I have to check out a Gemini bro and I have to go to shopping at the market at 3 PM. I have to play badminton tomorrow at 8 o'clock"
+Input: "remind me that I have to check out a Gemini bro and I have to go to shopping at the market at 3 PM.
+ I have to play badminton tomorrow at 8 o'clock. Uhm I need to buy clothes at 7, sorry, at 10 o clock. 
+ Ah Learn LLM and RAG tomorrow and working on math in the next 2 days"
 Output:
 [
   {
     'title': "Check out a Gemini bro",
-    'important': False,
+    'important': True,
     'dueDateTime': None
   },
   {
@@ -20,8 +28,23 @@ Output:
   },
   {
     'title': "Play badminton tomorrow at 8 o clock",
+    'important': False,
+    'dueDateTime': "2024-01-11:08:00:00"
+  }
+  {
+    'title': "Buy clothes at 10 o clock",
+    'important': False,
+    'dueDateTime': "2024-01-10:10:00:00"
+  }
+  {
+    'title': "Learn LLM and RAG tomorrow",
     'important': True,
-    'dueDateTime': "2024-01-10:08:00:00"
+    'dueDateTime': "2024-01-11:00:00:00"
+  }
+  {
+    'title': "Working on math in the next 2 days",
+    'important': True,
+    'dueDateTime': "2024-01-12:00:00:00"
   }
 ]
 

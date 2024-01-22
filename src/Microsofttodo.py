@@ -324,6 +324,13 @@ class MicrosoftToDo:
         
         if dueDateTime is not None:
             dueDateTime = datetime.strptime(dueDateTime, '%Y-%m-%d:%H:%M:%S')
+                # Check if the time part is '00:00'
+            if dueDateTime.strftime('%H:%M') == '00:00':
+                # Replace HH:MM with the current datetime HH:MM
+                dueDateTime = dueDateTime.replace(
+                    hour=datetime.now().hour, minute=datetime.now().minute
+                )
+
             if reminder_datetime is None:
                 reminder_datetime = dueDateTime
         
