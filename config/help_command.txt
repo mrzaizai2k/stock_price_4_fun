@@ -15,6 +15,7 @@ Available features:
 - /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
 - /summarynewsurl: Summary news from arbitrary url
 - Summarize idea from Audio or Voice into To-Do list
+- /masterquest: Answer the question with my master data in HCMUT (LLM + RAG system)
 ---------------
 
 Only me features:

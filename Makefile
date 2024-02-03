@@ -24,4 +24,7 @@ list: #List all the running bots
 kill:
 	pkill -f "python src/stock_bot.py"
 
+ask:
+	python src/llm_with_rag.py
+	
 all: install bot

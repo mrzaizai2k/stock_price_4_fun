@@ -17,6 +17,7 @@ backoff==2.2.1
 beautifulsoup4==4.12.2
 bitsandbytes==0.41.3.post2
 bleach==6.1.0
+blinker==1.7.0
 bottle==0.12.25
 bs4==0.0.1
 certifi==2023.7.22
@@ -42,6 +43,7 @@ feedfinder2==0.0.4
 feedparser==6.0.11
 filelock==3.13.1
 filetype==1.2.0
+Flask==3.0.1
 fonttools==4.44.0
 fqdn==1.5.1
 frozenlist==1.4.0
@@ -61,6 +63,7 @@ ipython==8.14.0
 ipython-genutils==0.2.0
 ipywidgets==8.0.7
 isoduration==20.11.0
+itsdangerous==2.1.2
 jedi==0.19.1
 jieba3k==0.35.1
 Jinja2==3.1.2
@@ -231,6 +234,7 @@ wcwidth==0.2.9
 webcolors==1.13
 webencodings==0.5.1
 websocket-client==1.6.4
+Werkzeug==3.0.1
 widgetsnbextension==4.0.9
 wrapt==1.16.0
 wsproto==1.2.0

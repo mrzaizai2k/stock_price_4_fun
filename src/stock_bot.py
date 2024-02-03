@@ -82,6 +82,19 @@ def ask_pattern_stock(message, command):
     else: # command == '/pattern':
         bot.register_next_step_handler(message, find_similar_pattern, symbol)
 
+@bot.message_handler(commands=['masterquest'])
+def ask_for_question(message):
+    # Ask for the stock symbol
+    markup = types.ForceReply(selective = False)
+    bot.reply_to(message, "Please enter the question:", reply_markup = markup)
+    bot.register_next_step_handler(message, masterquest)
+
+def masterquest(message):
+    query = message.text
+    api_url = 'http://localhost:8083/query'
+    response = requests.post(api_url, json={'query': query})
+    bot.reply_to(message, f"The answer: {response.json()['result']}")
+
 
 def find_similar_pattern(message, symbol):
 
