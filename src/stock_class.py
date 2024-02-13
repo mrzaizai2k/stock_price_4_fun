@@ -43,9 +43,9 @@ class Stock:
 
     def load_current_data(self):
         current_date = datetime.now().strftime('%Y-%m-%d')
-        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=30)).strftime('%Y-%m-%d')
+        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=10)).strftime('%Y-%m-%d')
         df =  stock_historical_data(symbol=self.symbol, start_date = start_date,
-                            end_date=current_date, resolution='5', type=self.type, beautify=True)
+                            end_date=current_date, resolution='1H', type=self.type, beautify=True)
         return df
     
     def get_current_price(self):
