@@ -84,6 +84,9 @@ def ask_pattern_stock(message, command):
 
 @bot.message_handler(commands=['masterquest'])
 def ask_for_question(message):
+    if not validate_mrzaizai2k_user(message.chat.id):
+        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        return
     # Ask for the stock symbol
     markup = types.ForceReply(selective = False)
     bot.reply_to(message, "Please enter the question:", reply_markup = markup)
@@ -91,9 +94,31 @@ def ask_for_question(message):
 
 def masterquest(message):
     query = message.text
-    api_url = 'http://localhost:8083/query'
-    response = requests.post(api_url, json={'query': query})
+    masterquest_url = data.get('masterquest_url')
+    response = requests.post(masterquest_url, json={'query': query})
+    print(f'Result: {response.json()}')
+
     bot.reply_to(message, f"The answer: {response.json()['result']}")
+    bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
+    
+
+
+@bot.message_handler(commands=['updatevectordb'])
+def updatevectordb(message):
+    if not validate_mrzaizai2k_user(message.chat.id):
+        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        return
+    
+    updatevectordb_url = data.get('updatevectordb_url') # Update the URL if your Flask app runs on a different port or host
+    try:
+        response = requests.post(updatevectordb_url)
+        if response.status_code == 200:
+            print("API Test Successful: Update was successful")
+            bot.send_message(message.chat.id, "Update was successful")
+        else:
+            print(f"API Test Failed: {response.status_code} - {response.json()['message']}")
+    except Exception as e:
+        print(f"API Test Failed: {str(e)}")
 
 
 def find_similar_pattern(message, symbol):

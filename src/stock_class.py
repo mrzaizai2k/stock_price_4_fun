@@ -40,9 +40,10 @@ class Stock:
         df = convert_data_type(df, [self.time_col], self.float_cols, self.cat_cols)
         return df
 
+
     def load_current_data(self):
         current_date = datetime.now().strftime('%Y-%m-%d')
-        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=2)).strftime('%Y-%m-%d')
+        start_date = (datetime.strptime(current_date, "%Y-%m-%d") - timedelta(days=30)).strftime('%Y-%m-%d')
         df =  stock_historical_data(symbol=self.symbol, start_date = start_date,
                             end_date=current_date, resolution='5', type=self.type, beautify=True)
         return df

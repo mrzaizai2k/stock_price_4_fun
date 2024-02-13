@@ -15,10 +15,11 @@ Available features:
 - /buysellanalyze: Picture of my Buy sell for a stock (FPTS data)
 - /summarynewsurl: Summary news from arbitrary url
 - Summarize idea from Audio or Voice into To-Do list
-- /masterquest: Answer the question with my master data in HCMUT (LLM + RAG system)
 ---------------
 
 Only me features:
 - /remote: Open remote tunnel to vscode on mrzaizai2k laptop
 - /scrape: Manually scraping trading data and news
 - /log: Send the log file
+- /masterquest: Answer the question with my master data in HCMUT (LLM + RAG system)
+- /updatevectordb: Update vector database for masterquest command

@@ -4,6 +4,8 @@ buy_sell_df_path: data/LichSuKhopLenh_058C647873.csv
 asset_data_path: data/BaoCaoTaiSan_058C647873.csv
 motif_data_path: memory/motif.csv
 summary_news_data_path: data/summary_stock_news.json
+masterquest_url: http://localhost:8083/query
+updatevectordb_url: http://localhost:8083/update
 
 special_symbols:
   CHECK_CHAR: ✅
