@@ -93,14 +93,18 @@ def ask_for_question(message):
     bot.register_next_step_handler(message, masterquest)
 
 def masterquest(message):
+    
     query = message.text
     masterquest_url = data.get('masterquest_url')
-    response = requests.post(masterquest_url, json={'query': query})
-    print(f'Result: {response.json()}')
-
-    bot.reply_to(message, f"The answer: {response.json()['result']}")
-    bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
-    
+    try:
+        response = requests.post(masterquest_url, json={'query': query})
+        print(f'Result: {response.json()}')
+        bot.reply_to(message, f"The answer: {response.json()['result']}")
+        bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
+    except Exception as e:
+        print(f'Error: {e}')
+        print(f'You might need tot run the LLM with RAG system on port 8083')
+        bot.send_message(message.chat.id, f"Error on connecting the LLM and RAG system")
 
 
 @bot.message_handler(commands=['updatevectordb'])
