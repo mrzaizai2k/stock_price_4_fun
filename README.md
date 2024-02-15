@@ -17,6 +17,7 @@
 3. [Open VScode tunnel](#open-vscode-tunnel)
 3. [Summarize Sound](#summarize-sound)
 3. [Summarize News](#summarize-news)
+3. [LLM with RAG system](#llm-with-rag-system)
 3. [Example Uses](#example-uses)
 3. [To-Do List](#to-do-list)
 
@@ -45,6 +46,8 @@ Welcome to the Mrzaizai2k Stock Assistant bot! This bot is designed to assist yo
 1. `/remote`: Open remote tunnel to vscode on my latop.
 2. `/log`: Send the log file.
 3. `/scrape`:  Manually scraping trading data and news
+4. `/masterquest`: Answer the question with my master data in HCMUT (LLM + RAG system)
+5. `/updatevectordb`: Update vector database for masterquest command
 
 
 ## How to Use
@@ -206,6 +209,9 @@ I leveraged [Langchain](https://github.com/langchain-ai/langchain) and the `beau
 
 If you prefer a more direct approach, simply use the command `/summarynewsurl` and paste the URL link. This will provide you with a summary of any site you desire.
 
+## LLM with RAG system 
+
+The system can anwser the questions based on my doccuments (for my master courses). It will ask the port 8083 and get the response. Refer to my [LLM with RAG](https://github.com/mrzaizai2k/LLM-with-RAG/tree/main) repo for more information
 
 ## Example Uses
 
