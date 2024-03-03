@@ -428,13 +428,19 @@ class TradeScraper:
         # self.wait = WebDriverWait(self.driver, 10)
 
     def initialize_driver(self, homedir, chrome_options):
-        try: # option on my PC
-            chrome_options.binary_location = f"{homedir}/chrome-linux64/chrome"
-            webdriver_service = Service(f"{homedir}/chromedriver-linux64/chromedriver") 
-        except: # option on my laptop
+        try: # option on my laptop
+            print('laptop')
             webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
+            driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+
+        except: # option on my PC
+            print('pc')
+            chrome_options.binary_location = f"{homedir}/chrome-linux64/chrome"
+            webdriver_service = Service(f"{homedir}/chromedriver-linux64/chromedriver")
+            driver = webdriver.Chrome(service=webdriver_service, options=chrome_options) 
+            
         
-        driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+        # driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
         return driver
 
     def signin(self):
