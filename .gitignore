@@ -11,3 +11,6 @@ code
 /model
 /doc
 /logging
+chromedriver
+*xls
+*xlsx

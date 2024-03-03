@@ -412,21 +412,30 @@ class TradeScraper:
 
         chrome_options = Options()
         chrome_options.add_argument("--no-sandbox")
+
         homedir = os.path.expanduser("~")
-        webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
 
         self.show_UI = show_UI
-        if self.show_UI:
-            self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
-        else:
+        if not self.show_UI:
             chrome_options.add_argument("--headless") # Ensure GUI is off
-            self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
-        
+
+        self.driver = self.initialize_driver(homedir, chrome_options)
+
         self.source_folder = os.path.expanduser("./") # the default Downloads folder
         self.destination_folder = destination_folder # Specify your destination folder
         check_path(self.destination_folder)
         self.signin()
         # self.wait = WebDriverWait(self.driver, 10)
+
+    def initialize_driver(self, homedir, chrome_options):
+        try: # option on my PC
+            chrome_options.binary_location = f"{homedir}/chrome-linux64/chrome"
+            webdriver_service = Service(f"{homedir}/chromedriver-linux64/chromedriver") 
+        except: # option on my laptop
+            webdriver_service = Service(f"{homedir}/chromedriver/stable/chromedriver-linux64/chromedriver")
+        
+        driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+        return driver
 
     def signin(self):
         self.driver.get("https://accounts.fpts.com.vn/Login?href=eztrade")

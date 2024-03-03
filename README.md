@@ -69,6 +69,7 @@ Before running the Mrzaizai2k Stock Assistant Bot, follow these steps to set up 
      ```
 
 2. **Install Dependencies:**
+   - Install selenium for linux: https://cloudbytes.dev/snippets/run-selenium-and-chrome-on-wsl2
    - Navigate to the project directory and install the required packages using the provided `setup_win.txt` file:
      ```bash
      pip install -r setup_win.txt
