@@ -17,13 +17,14 @@ warnings.filterwarnings("ignore")  # avoid printing out absolute paths
 import selenium 
 import shutil
 import time
+from functools import partial
 
 from datetime import datetime,timedelta
 from typing import Literal, Optional
 
 from bs4 import BeautifulSoup
 from requests.exceptions import ConnectionError
-
+from src.Utils.utils import *
 
 
 from selenium import webdriver
@@ -33,6 +34,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import concurrent.futures
 
 
 
@@ -556,7 +558,7 @@ class TradeScraper:
     def close_browser(self):
         self.driver.quit()
 
-
+@timeit
 def scrape_trading_data(user_name, password, max_retries=3, wait_time=60):
     retries = 0
     scraper = TradeScraper(user_name, password)
@@ -576,3 +578,35 @@ def scrape_trading_data(user_name, password, max_retries=3, wait_time=60):
             retries += 1
     else:
         print(f"Max retries reached. Unable to establish a connection after {max_retries} attempts.")
+
+
+@timeit
+def scrape_trading_data(user_name, password, max_retries=3, wait_time=60):
+    def scrape_report(report_type):
+        scraper.scrape_fpts_trading_log(report_type=report_type)
+
+    retries = 0
+    scraper = TradeScraper(user_name, password)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        while retries < max_retries:
+            try:
+                futures = [executor.submit(partial(scrape_report, report_type)) for report_type in ['TradeLog', 'reportprofitloss', 'AssetReport2']]
+                concurrent.futures.wait(futures)  # Wait for all threads to finish
+                print('Finish scraping financial report!')
+                scraper.close_browser()
+                break  # If successful, exit the loop
+            except ConnectionError as e:
+                print(f"Error: {e}")
+                print(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+                retries += 1
+        else:
+            print(f"Max retries reached. Unable to establish a connection after {max_retries} attempts.")
+
+
+if __name__=="__main__":
+    TRADE_USER= os.getenv('TRADE_USER')
+    TRADE_PASS= os.getenv('TRADE_PASS')
+    # scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)
+    scrape_trading_data_async(user_name=TRADE_USER, password=TRADE_PASS)
