@@ -609,4 +609,4 @@ if __name__=="__main__":
     TRADE_USER= os.getenv('TRADE_USER')
     TRADE_PASS= os.getenv('TRADE_PASS')
     # scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)
-    scrape_trading_data_async(user_name=TRADE_USER, password=TRADE_PASS)
+    scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)

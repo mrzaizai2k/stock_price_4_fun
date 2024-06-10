@@ -17,7 +17,7 @@ urllib3.disable_warnings()
 from typing import Literal
 from transformers import pipeline
 from bs4 import BeautifulSoup
-from src.Utils.utils import check_path, take_device
+from src.Utils.utils import check_path, take_device, timeit
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
@@ -32,6 +32,7 @@ from langchain.prompts import PromptTemplate
 from ctransformers import AutoModelForCausalLM, AutoTokenizer
 from langchain_openai import OpenAI
 from datetime import datetime
+
 
 
 class SeperateTaskPrompt:
@@ -303,9 +304,11 @@ class NewsScraper:
 
 class NewsSummarizer:
     def __init__(self, summarizer = pipeline("summarization", 
-                                             model="Falconsai/text_summarization", device = take_device()),
+                                             model="Falconsai/text_summarization", 
+                                             torch_dtype=torch.bfloat16,
+                                             device = take_device()),
                  translator = GoogleTranslator(),
-                 max_length:int=230, 
+                 max_length:int=200, 
                  min_length:int=30,
                  ):
         self.summarizer = summarizer
@@ -313,12 +316,15 @@ class NewsSummarizer:
         self.max_length = max_length
         self.min_length = min_length
         
-    def summary_text(self,text:str)->str:
+    def summary_text(self,text):
         '''Summary short text'''
-        sum_text = self.summarizer(text, max_length=self.max_length, 
-                                   min_length=self.min_length, do_sample=False)[0]['summary_text']
+        sum_text= f''
+        for model_output in self.summarizer(text, batch_size=8, truncation="only_first"):
+            text = model_output['summary_text']
+            sum_text += f'\n{text}'
         return sum_text
     
+    @timeit
     def summary_news(self, news:str, chunk_overlap:str = 0)->str:
 
         text_splitter = TokenTextSplitter(chunk_size=self.max_length * 2,
@@ -326,8 +332,7 @@ class NewsSummarizer:
         
         trans_news = self.translator.translate(text=news, to_lang='en')
         text_chunks = text_splitter.split_text(trans_news)
-        summary_documents = [self.summary_text(chunk) for chunk in text_chunks]
-        summary_text = '\n'.join(summary_documents)
+        summary_text = self.summary_text(text_chunks)
 
         summary_text = self.translator.translate(text=summary_text, to_lang='vi')
         return summary_text
@@ -441,9 +446,9 @@ class StockNewsDatabase:
         print(f"Summary data saved to {self.summary_news_data_path}")
         
 if __name__ == "__main__":
-    speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
-    text = speech_to_text.generate_speech_to_text()
-    print ('Text', text)
+    # speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
+    # text = speech_to_text.generate_speech_to_text()
+    # print ('Text', text)
 
     symbol = 'SSI'
     date_format='year'

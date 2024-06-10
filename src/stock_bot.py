@@ -93,7 +93,6 @@ def ask_for_question(message):
     bot.register_next_step_handler(message, masterquest)
 
 def masterquest(message):
-    
     query = message.text
     masterquest_url = data.get('masterquest_url')
     try:
