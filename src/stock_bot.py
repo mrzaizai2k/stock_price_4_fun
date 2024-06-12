@@ -39,6 +39,9 @@ except:
 
 
 bot = telebot.TeleBot(TELEBOT_API)
+new_summarizer = NewsSummarizer()
+news_scraper = NewsScraper()
+
 
 
 @bot.message_handler(commands=['start'])
@@ -441,14 +444,12 @@ def ask_for_link(message):
     # Ask for the stock symbol
     markup = types.ForceReply(selective = False)
     bot.reply_to(message, "Please paste the news url for summarization:", reply_markup = markup)
-    bot.register_next_step_handler(message, summary_news_from_links)
+    bot.register_next_step_handler(message, summary_news_from_links, new_summarizer, news_scraper)
 
 
-def summary_news_from_links(message):
+def summary_news_from_links(message, new_summarizer:NewsSummarizer, news_scraper:NewsScraper):
     news_url = message.text
-    news_scraper = NewsScraper()
     news = news_scraper.take_text_from_link(news_url=news_url)
-    new_summarizer = NewsSummarizer()
     sum_text = new_summarizer.summary_news(news= news)
     bot.send_message(message.chat.id, f"Here's your summary news:\n {sum_text}")
 

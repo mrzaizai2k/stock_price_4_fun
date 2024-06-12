@@ -305,7 +305,7 @@ class NewsScraper:
 class NewsSummarizer:
     def __init__(self, summarizer = pipeline("summarization", 
                                              model="Falconsai/text_summarization", 
-                                             torch_dtype=torch.bfloat16,
+                                             torch_dtype=torch.float16,
                                              device = take_device()),
                  translator = GoogleTranslator(),
                  max_length:int=200, 
@@ -319,15 +319,16 @@ class NewsSummarizer:
     def summary_text(self,text):
         '''Summary short text'''
         sum_text= f''
-        for model_output in self.summarizer(text, batch_size=8, truncation="only_first"):
+        for model_output in self.summarizer(text, batch_size=8, 
+                                            truncation="only_first",):
             text = model_output['summary_text']
             sum_text += f'\n{text}'
         return sum_text
     
-    @timeit
+    # @timeit
     def summary_news(self, news:str, chunk_overlap:str = 0)->str:
 
-        text_splitter = TokenTextSplitter(chunk_size=self.max_length * 2,
+        text_splitter = TokenTextSplitter(chunk_size=self.max_length * 3,
                                            chunk_overlap=chunk_overlap)
         
         trans_news = self.translator.translate(text=news, to_lang='en')
@@ -336,8 +337,6 @@ class NewsSummarizer:
 
         summary_text = self.translator.translate(text=summary_text, to_lang='vi')
         return summary_text
-    
-
 
 class StockNewsDatabase:
     def __init__(self, summary_news_data_path='data/summary_stock_news.json'):
