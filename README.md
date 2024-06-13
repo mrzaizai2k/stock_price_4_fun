@@ -195,7 +195,7 @@ It has the capability to understand and fix tasks, such as when you mention a ta
       Input: "I want to go shopping at 8 o'clock, uhm, I'm sorry, at 9 o'clock."
       Output: ["Go shopping at 9 o'clock."]
       
-Update: I have uoadted the model to chatgpt turbo 3.5 Instruct to get better result in no time!
+Update: I have updated the model to chatgpt turbo 3.5 Instruct to get better result in no time!
 
 Personally, I use the Microsoft To Do app, so the bot will sync those tasks to my app! The information can be found in [tod0](https://github.com/kiblee/tod0/tree/master).
 

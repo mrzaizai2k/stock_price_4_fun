@@ -47,10 +47,10 @@ class SeperateTaskPrompt:
 
     def load_llm(self):
         OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-        self.llm = OpenAI(openai_api_key=OPENAI_API_KEY, 
+        self.llm = OpenAI(model="gpt-3.5-turbo-instruct",
+                          openai_api_key=OPENAI_API_KEY, 
                           max_tokens = 512,
                           temperature=0.7,
-                          
                           )
         
     def get_response(self, text) -> list:

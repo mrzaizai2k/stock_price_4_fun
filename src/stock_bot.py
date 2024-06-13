@@ -101,7 +101,7 @@ def masterquest(message):
     try:
         response = requests.post(masterquest_url, json={'query': query})
         print(f'Result: {response.json()}')
-        bot.reply_to(message, f"The answer: {response.json()['result']}")
+        bot.reply_to(message, f"The answer from {response.json()['model_type']}: \n{response.json()['result']}")
         bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
     except Exception as e:
         print(f'Error: {e}')
