@@ -170,7 +170,7 @@ class PayBackTime(Stock):
         report += f"The payback time for {self.symbol} is {self.calculate_payback_time()} years.\n"
         report += "-------------------------\n"
         
-        print (report)
+        # print (report)
         # Return the report as a text string
         return report
 

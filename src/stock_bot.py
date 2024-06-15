@@ -22,6 +22,8 @@ from src.Indicators import MACD, BigDayWarning, PricevsMA
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, scrape_trading_data, AssetAnalyzer
 from src.summarize_text import *
+from src.Utils.logger import create_logger
+logger = create_logger(logfile="logging/stock_bot.log")
 
 
 data = config_parser(data_config_path = 'config/config.yaml')
@@ -41,8 +43,6 @@ except:
 bot = telebot.TeleBot(TELEBOT_API)
 new_summarizer = NewsSummarizer()
 news_scraper = NewsScraper()
-
-
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -100,11 +100,13 @@ def masterquest(message):
     masterquest_url = data.get('masterquest_url')
     try:
         response = requests.post(masterquest_url, json={'query': query})
-        print(f'Result: {response.json()}')
+        # print(f'Result: {response.json()}')
+        logger.debug(msg=f"Result: {response.json()}")
         bot.reply_to(message, f"The answer from {response.json()['model_type']}: \n{response.json()['result']}")
         bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
     except Exception as e:
-        print(f'Error: {e}')
+        # print(f'Error: {e}')
+        logger.debug(msg=f"Error on LLM and RAG system: {e}")
         print(f'You might need tot run the LLM with RAG system on port 8083')
         bot.send_message(message.chat.id, f"Error on connecting the LLM and RAG system")
 
@@ -116,15 +118,15 @@ def updatevectordb(message):
         return
     
     updatevectordb_url = data.get('updatevectordb_url') # Update the URL if your Flask app runs on a different port or host
-    try:
-        response = requests.post(updatevectordb_url)
-        if response.status_code == 200:
-            print("API Test Successful: Update was successful")
-            bot.send_message(message.chat.id, "Update was successful")
-        else:
-            print(f"API Test Failed: {response.status_code} - {response.json()['message']}")
-    except Exception as e:
-        print(f"API Test Failed: {str(e)}")
+    response = requests.post(updatevectordb_url)
+    if response.status_code == 200:
+        # print("Update Vector DB Successful: Update was successful")
+        logger.debug(msg = "Update Vector DB Successful: Update was successful")
+        bot.send_message(message.chat.id, "Update was successful")
+    else:
+        # print(f"Update Vector DB Failed: {response.status_code} - {response.json()['message']}")
+        logger.debug(msg = f"Update Vector DB Failed: {response.status_code} - {response.json()['message']}")
+
 
 
 def find_similar_pattern(message, symbol):
@@ -172,6 +174,7 @@ def get_paybacktime(message):
     
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+    logger.debug(msg=f"report: {report}")
 
 @validate_symbol_decorator(bot)
 def get_buysell_analyze(message):
@@ -197,10 +200,11 @@ def get_support_resistance(message):
     sr_finding = SupportResistFinding(symbol=symbol)
     result = sr_finding.find_closest_support_resist(current_price=sr_finding.get_current_price())
     report = f'The current price for {symbol} is {sr_finding.get_current_price()}\n'
-    report += f'- The closest support is {result[0]}\n'
-    report += f'- The closest resistance is {result[1]}\n'
+    report += f'- The closest support is {round(result[0], 2)}\n'
+    report += f'- The closest resistance is {round(result[1], 2)}\n'
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+    logger.debug(msg = f"Report: {report}")
 
 @validate_symbol_decorator(bot)
 def calculate_risk(message):
@@ -223,6 +227,7 @@ def calculate_risk(message):
     mess += f'Total price: {stock_price*num_stocks/1_000_000:.2f} (triệu VND)\n'
     mess += f'The fee is: 0.188% -> {((0.188/100) * stock_price*num_stocks)/1_000} (nghìn VND)\n'
     bot.send_message(message.chat.id, mess)
+    logger.debug(msg = f"Risk: {mess}")
 
 @validate_symbol_decorator(bot)
 def rate(message):
@@ -237,16 +242,18 @@ def rate(message):
 
     # Send the report to the user
     bot.send_message(message.chat.id, report)
+    logger.debug(msg = f"Rating: {report}")
 
 @bot.message_handler(commands=['findpbt'])
 def findpbt(message):
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     pass_ticker = find_PBT_stocks(file_path="memory/paybacktime.csv")
     pass_ticker_string = ", ".join(pass_ticker)
-    print('pass_ticker_string',pass_ticker_string)
+    # print('pass_ticker_string',pass_ticker_string)
 
     # Send the report to the user
     bot.send_message(message.chat.id, f"The Paybacktime stocks are {pass_ticker_string}")
+    logger.debug(msg = f"Paybacktime stocks: {pass_ticker_string}")
 
 @bot.message_handler(commands=['findmyfav'])
 def findmyfav(message):
@@ -262,12 +269,13 @@ def findmyfav(message):
         'strongBuyPercentage': (20,100),
         'relativeStrength3Day': (50,100),
     }
-    
+    logger.debug(msg = f"my_params: {my_params}")
     pass_ticker = filter_stocks(param=my_params)
     pass_ticker_string = ", ".join(pass_ticker.ticker.unique())
 
     # Send the report to the user
     bot.send_message(message.chat.id, f"The stocks most suitable for u are: {pass_ticker_string}")
+    logger.debug(msg = f"Suitable stocks: {pass_ticker_string}")
 
 
 @bot.message_handler(commands=['findbestmotif'])
@@ -284,6 +292,7 @@ def findpbt(message):
     # Send the report to the user
     report += f"Use /mulpattern to see the pattern of each stock with date: {market_motif_search.start_date}"
     bot.send_message(message.chat.id, report)
+    logger.debug(msg=f"Use /mulpattern to see the pattern of each stock with date: {market_motif_search.start_date}")
 
 @bot.message_handler(commands=['winlossanalyze'])
 def analyze_winloss(message):
@@ -291,6 +300,7 @@ def analyze_winloss(message):
     winloss_analyzer = WinLossAnalyzer(win_loss_df_path=win_loss_df_path)
     report = winloss_analyzer.get_report()
     bot.send_message(message.chat.id, report)
+    logger.debug(msg=f"WinLoss Report: {report}")
 
 
 @bot.message_handler(commands=['watchlist'])
@@ -303,6 +313,7 @@ def handle_watchlist(message):
 
     bot.send_message(message.chat.id, "Choose an action:", reply_markup=markup)
     bot.register_next_step_handler(message, process_button_click)
+
 
 def process_button_click(message):
     user_action = message.text.lower()
@@ -328,6 +339,7 @@ def process_add_stock(message):
     watchlist.append(symbol)
     user_db.save_watch_list(user_id=message.chat.id, watch_list=watchlist)
     bot.send_message(message.chat.id, f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
+    logger.debug(msg = f"{symbol} added to your watchlist. Updated watchlist: {watchlist}")
 
 @validate_symbol_decorator(bot)
 def process_remove_stock(message):
@@ -340,14 +352,20 @@ def process_remove_stock(message):
         watchlist.remove(symbol)
         user_db.save_watch_list(user_id=message.chat.id, watch_list=watchlist)
         bot.send_message(message.chat.id, f"{symbol} removed from your watchlist. Updated watchlist: {watchlist}")
+        logger.debug(msg = f"{symbol} removed from your watchlist. Updated watchlist: {watchlist}")
+
     else:
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
+        logger.debug(msg = f"{symbol} not found in your watchlist.")
+
 
 
 @bot.message_handler(commands=['remote'])
 def open_vscode_tunnel(message):
     if not validate_mrzaizai2k_user(message.chat.id):
-        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        mess = f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code"
+        bot.send_message(message.chat.id, mess)
+        logger.info(mess)
         return
     bot.reply_to(message, f"VS Code remote tunnel Opening...")
     Thread(target=run_vscode_tunnel, args=(bot, message)).start()
@@ -379,14 +397,20 @@ def summary_news_daily(max_retries=3, wait_time=60):
         try:
             stock_news_db.update_news(watch_list=all_stocks)
             print('Finish updating daily news summary!')
+            logger.debug(msg ='Finish updating daily news summary!')
             break  # If successful, exit the loop
         except Exception as e:
-            print(f"Error: {e}")
-            print(f"Retrying in {wait_time} seconds...")
+            # print(f"Error: {e}")
+            logger.debug(msg =f'Error updating daily news summary {e}')
+            # print(f"Retrying in {wait_time} seconds...")
+            logger.debug(msg =f"Retrying in {wait_time} seconds...")
+
             time.sleep(wait_time)
             retries += 1
     else:
-        print(f"Max retries reached. Unable to update daily news summary after {max_retries} attempts.")
+        # print(f"Max retries reached. Unable to update daily news summary after {max_retries} attempts.")
+        logger.debug(msg =f"Max retries reached. Unable to update daily news summary after {max_retries} attempts.")
+
 
 
 
@@ -446,30 +470,36 @@ def ask_for_link(message):
     bot.reply_to(message, "Please paste the news url for summarization:", reply_markup = markup)
     bot.register_next_step_handler(message, summary_news_from_links, new_summarizer, news_scraper)
 
-
 def summary_news_from_links(message, new_summarizer:NewsSummarizer, news_scraper:NewsScraper):
     news_url = message.text
     news = news_scraper.take_text_from_link(news_url=news_url)
     sum_text = new_summarizer.summary_news(news= news)
     bot.send_message(message.chat.id, f"Here's your summary news:\n {sum_text}")
+    logger.debug(msg= f"Here's your summary news:\n {sum_text}")
 
 @bot.message_handler(commands=['scrape'])
 def scrape_data(message):
     '''Manually scrape data trading report and update news'''
     if not validate_mrzaizai2k_user(message.chat.id):
-        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        mess = f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code"
+        bot.send_message(message.chat.id, mess)
+        logger.info(mess)
         return
     bot.send_message(message.chat.id, "Please wait. This process can takes several minutes")
     scrape_trading_data(user_name = TRADE_USER, password = TRADE_PASS,)
     bot.send_message(message.chat.id, "Done scraping trading data!")
+    logger.info(msg="Done scraping trading data!")
     summary_news_daily()
     bot.send_message(message.chat.id, "Done updating news!")
+    logger.info(msg="Done updating news!")
 
 @bot.message_handler(commands=['log'])
 def send_log(message):
 
     if not validate_mrzaizai2k_user(message.chat.id):
-        bot.send_message(message.chat.id, f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
+        mess = f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code"
+        bot.send_message(message.chat.id, mess)
+        logger.info(mess)
         return
     
     log_file_path = data.get('log_file_path')
@@ -499,10 +529,12 @@ def summarize_sound(message):
     
     try:
         text = speech_to_text.generate_speech_to_text()
-        print(f'Original voice:\n {text}')
+        # print(f'Original voice:\n {text}')
+        logger.debug(msg=f'Original voice:\n {text}')
         bot.reply_to(message, f"Here's your note:\n {text}")
     except Exception as e:
-        print('Error', e)
+        # print('Error', e)
+        logger.debug(msg=f'Error on understanding sound: {e}')
         text = None
         bot.reply_to(message, f"Sorry, I can't understand your voice. Please try again!")
 
@@ -514,13 +546,15 @@ def summarize_sound(message):
     bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
     tasks_list = speech_to_text.get_task_list()
     print('tasks_list', tasks_list)
+    logger.debug(msg=f'tasks_list: {tasks_list}')
+
     
     if tasks_list is not None and validate_mrzaizai2k_user(message.chat.id):
         sync_task_to_todo(tasks_list)
         bot.send_message(message.chat.id, f"The tasks have been integrated to Microsoft To Do!")
+        logger.info(msg=f"The tasks have been integrated to Microsoft To Do!")
     
    
-
 # Define the function to handle all other messages
 @bot.message_handler(func=lambda message: True)
 def echo(message):
@@ -539,11 +573,13 @@ def main():
 
     while True:
         try:
-            bot.infinity_polling()
+            bot.infinity_polling(logger_level=None)
             
         except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            print("Resetting the bot in 3 seconds...")
+            # print(f"An error occurred: {str(e)}")
+            logger.debug(msg=f"An error occurred: {str(e)}")
+            # print("Resetting the bot in 3 seconds...")
+            logger.debug(msg="Resetting the bot in 3 seconds...")
             time.sleep(3)  # Pause for 3 seconds before restarting
             main()  # Restart the main function
         

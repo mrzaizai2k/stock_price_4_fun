@@ -25,6 +25,7 @@ from langchain_community.document_loaders import (
 )
 from unstructured.cleaners.core import clean_extra_whitespace
 from langchain.text_splitter import TokenTextSplitter
+from langchain_experimental.text_splitter import SemanticChunker
 
 from langchain_community.llms import CTransformers
 from langchain.chains import LLMChain
@@ -32,6 +33,7 @@ from langchain.prompts import PromptTemplate
 from ctransformers import AutoModelForCausalLM, AutoTokenizer
 from langchain_openai import OpenAI
 from datetime import datetime
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 
 
@@ -165,8 +167,6 @@ class SpeechSummaryProcessor:
         
     def get_task_list(self):
         return self.response_list
-
-
 
 class NewsScraper:
     '''
@@ -308,6 +308,7 @@ class NewsSummarizer:
                                              torch_dtype=torch.float16,
                                              device = take_device()),
                  translator = GoogleTranslator(),
+                 chunk_overlap:str = 10,
                  max_length:int=200, 
                  min_length:int=30,
                  ):
@@ -315,7 +316,14 @@ class NewsSummarizer:
         self.translator = translator
         self.max_length = max_length
         self.min_length = min_length
-        
+        self.chunk_overlap = chunk_overlap
+        self.text_splitter = self.load_text_splitter()
+    
+    def load_text_splitter(self):
+        text_splitter = TokenTextSplitter(chunk_size=int(self.max_length * 1.75),
+                                           chunk_overlap=self.chunk_overlap)
+        return text_splitter
+
     def summary_text(self,text):
         '''Summary short text'''
         sum_text= f''
@@ -325,17 +333,12 @@ class NewsSummarizer:
             sum_text += f'\n{text}'
         return sum_text
     
-    # @timeit
-    def summary_news(self, news:str, chunk_overlap:str = 0)->str:
-
-        text_splitter = TokenTextSplitter(chunk_size=self.max_length * 3,
-                                           chunk_overlap=chunk_overlap)
-        
+    def summary_news(self, news:str)->str:
         trans_news = self.translator.translate(text=news, to_lang='en')
-        text_chunks = text_splitter.split_text(trans_news)
+        text_chunks = self.text_splitter.split_text(trans_news)
         summary_text = self.summary_text(text_chunks)
-
         summary_text = self.translator.translate(text=summary_text, to_lang='vi')
+
         return summary_text
 
 class StockNewsDatabase:
