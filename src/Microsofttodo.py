@@ -15,6 +15,8 @@ from todocli.graphapi.oauth import get_oauth_session
 from todocli.utils.datetime_util import datetime_to_api_timestamp
 import json
 from requests_oauthlib import OAuth2Session
+
+
 # Oauth settings
 import os
 import pickle
@@ -203,7 +205,11 @@ class MicrosoftToDo:
         return True if response.ok else response.raise_for_status()
 
 
-    def get_tasks(self, list_name: str = None, list_id: str = None, num_tasks: int = 100):
+    def get_tasks(self, list_name: str = None, 
+                  list_id: str = None, 
+                  num_tasks: int = 100, 
+                  get_completed:bool = False):
+        
         assert (list_name is not None) or (
             list_id is not None
         ), "You must provide list_name or list_id"
@@ -212,9 +218,15 @@ class MicrosoftToDo:
         if list_id is None:
             list_id = self.get_list_id_by_name(list_name)
 
-        endpoint = (
-            f"{BASE_URL}/{list_id}/tasks?$filter=status ne 'completed'&$top={num_tasks}"
-        )
+        if get_completed:
+            endpoint = (
+                f"{BASE_URL}/{list_id}/tasks?$top={num_tasks}"
+            )
+        else:
+            endpoint = (
+                f"{BASE_URL}/{list_id}/tasks?$filter=status ne 'completed'&$top={num_tasks}"
+            )
+
         session = get_oauth_session()
         response = session.get(endpoint)
         response_value = self.parse_response(response)
@@ -352,3 +364,58 @@ class MicrosoftToDo:
         session = get_oauth_session()
         response = session.post(endpoint, json=request_body)
         return True if response.ok else response.raise_for_status()
+    
+    
+    def _filter_task_titles(self, task_titles):
+        """
+        Filters the task titles based on specific criteria.
+        """
+        import re
+        url_pattern = re.compile(r'(https?://|file://)')
+        key_pattern = re.compile(r'KEY|password|Error|\\\\DESKTOP')
+        number_pattern = re.compile(r'^\d+$')
+        number_comma_pattern = re.compile(r'^\d+,\d+,\d+$')
+
+        filtered_names = []
+        for name in task_titles:
+            if url_pattern.search(name):
+                continue
+            if key_pattern.search(name):
+                continue
+            if len(name.split()) > 20:
+                continue
+            if len(name) == 1:
+                continue
+            if number_pattern.fullmatch(name):
+                continue
+            if number_comma_pattern.fullmatch(name):
+                continue
+            filtered_names.append(name)
+        return filtered_names
+
+    def get_all_tasks(self, num_tasks:int = 100, get_completed:bool = False):
+        """
+        Get all tasks in the app 
+        Might be used to create a tasks dictionary
+        """
+        task_titles =[]
+        todo_lists = todo.get_lists()
+        for task_list in todo_lists:
+            list_name  = task_list['displayName']
+            try:
+                todo_tasks = todo.get_tasks(list_name=list_name, num_tasks=num_tasks, get_completed=get_completed)
+                names = [item['title'] for item in todo_tasks]
+                task_titles.extend(names)
+            except Exception as e:
+                print(f"Error: {e}")
+                print(f"Task list: {task_list}")
+        task_titles = self._filter_task_titles(task_titles)
+        return task_titles
+    
+if __name__ == "__main__":
+    todo = MicrosoftToDo()
+    todo_tasks = todo.get_tasks(list_name='Tasks')
+    todo_tasks[0:2]
+    names = [item['title'] for item in todo_tasks]
+    print (names)
+                

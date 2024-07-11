@@ -6,13 +6,130 @@ from vnstock import *
 from dotenv import load_dotenv
 load_dotenv()
 
+import cv2
 import subprocess
 import schedule
 import time
 import yaml
 from functools import wraps
 import torch
+from pydub import AudioSegment
+
+import re
+import phunspell
+from rank_bm25 import BM25Okapi
+import editdistance
+from typing import Literal
+
 from src.Microsofttodo import *
+
+from src.Utils.logger import create_logger
+logger = create_logger()
+
+
+class SpellCheck:
+    def __init__(self, history_tasks_path: str, n_grams: int):
+        self.history_tasks_path = history_tasks_path
+        self.n_grams = n_grams
+        self.history_tasks = self.load_history_tasks(history_tasks_path)
+
+    def preprocess_text(self, input_string):
+        return re.sub(r'[^\w\s\']', '', input_string)
+
+    def load_history_tasks(self, file_path:str):
+        with open(file_path, 'r') as file:
+            tasks = file.readlines()
+            tasks = [task.strip() for task in tasks]
+        return tasks
+
+    def generate_ngrams(self, text:str, n_grams:int=1):
+        words = text.split()
+        ngrams = []
+        for i in range(1, n_grams + 1):
+            ngrams.extend([' '.join(words[j:j + i]) for j in range(len(words) - i + 1)])
+        return ngrams
+
+    def get_best_match_bm25(self, token, history_tokens_flat, bm25, 
+                            verbose:bool = False):
+        token_candidates = bm25.get_top_n(token, history_tokens_flat, n=5)
+        if verbose:
+            print('wrong token', token)
+            print('token candidates', token_candidates[:5])
+        return token_candidates[0] if token_candidates else token
+
+    def get_best_match_editdistance(self, token, history_tokens_flat, 
+                                    verbose:bool = False):
+        distances = [(history_token, editdistance.eval(token, history_token)) for history_token in history_tokens_flat]
+        distances.sort(key=lambda x: x[1])
+        if verbose:
+            print('wrong token', token)
+            print('token candidates', distances[:5])  # Print top 5 candidates based on edit distance
+        return distances[0][0] if distances else token
+
+    def get_best_match_bm25_editdistance(self, token, history_tokens_flat, bm25, 
+                                         verbose:bool = False, top_n:int = 10):
+        token_candidates = bm25.get_top_n(token, history_tokens_flat, top_n)
+        if verbose:
+            print('wrong token', token)
+            print('BM25 top 10 candidates', token_candidates)
+
+        if not token_candidates:
+            return token
+
+        distances = [(candidate, editdistance.eval(token, candidate)) for candidate in token_candidates]
+        distances.sort(key=lambda x: x[1])
+        if verbose:
+            print('Edit Distance candidates', distances[:5])  # Print top 5 candidates based on edit distance
+
+        return distances[0][0] if distances else token
+
+    def spell_check_and_correct(self, input_string, 
+                                method: Literal["BM25", "editdistance", "BM25_EditDistance"], 
+                                loc_lang: Literal['en_US', 'vi_VN'] = 'en_US', 
+                                verbose: bool = False):
+        
+        input_tokens = self.preprocess_text(input_string.lower())
+        corrected_tokens = []
+
+        input_ngrams = self.generate_ngrams(input_tokens, self.n_grams)
+
+        history_tasks_tokens = [self.generate_ngrams(self.preprocess_text(task.lower()), self.n_grams) for task in self.history_tasks]
+        history_tokens_flat = [token for sublist in history_tasks_tokens for token in sublist]
+
+        pspell = phunspell.Phunspell(loc_lang=loc_lang)
+
+        if method == "BM25" or method == "BM25_EditDistance":
+            bm25 = BM25Okapi(history_tokens_flat)
+
+        for token in input_ngrams:
+            if token in pspell.lookup_list(token.split(" ")):
+                if method == "BM25":
+                    best_match = self.get_best_match_bm25(token, history_tokens_flat, bm25, verbose)
+                elif method == "editdistance":
+                    best_match = self.get_best_match_editdistance(token, history_tokens_flat, verbose)
+                elif method == "BM25_EditDistance":
+                    best_match = self.get_best_match_bm25_editdistance(token, history_tokens_flat, bm25, verbose)
+                corrected_tokens.append(best_match)
+            else:
+                corrected_tokens.append(token)
+
+        corrected_string = input_string
+        for original_token, corrected_token in zip(input_tokens.split(), corrected_tokens):
+            if original_token != corrected_token:
+                corrected_string = re.sub(r'\b{}\b'.format(re.escape(original_token)), corrected_token, corrected_string, count=1, flags=re.IGNORECASE)
+
+        corrected_string = corrected_string.capitalize()
+        return corrected_string
+    
+
+def convert_m4a_to_mp3(m4a_file_path:str, mp3_file_path:str):
+    # Load the .m4a file
+    audio = AudioSegment.from_file(m4a_file_path, format="m4a")
+    
+    # Export as .mp3 file
+    audio.export(mp3_file_path, format="mp3")
+    print(f"Conversion complete: {m4a_file_path} to {mp3_file_path}")
+
 
 def timeit(func):
     def wrapper(*args, **kwargs):
@@ -234,17 +351,18 @@ class UserDatabase:
 
 def main():
     print('Hi')
+    capture_image_from_camera()
     # check_path("data/data1")
     # check_path("data/data2/note.txt")
-    user_db = UserDatabase()
-    data_config_path = 'config/config.yaml'
-    with open(data_config_path, 'r') as file:
-        data = yaml.safe_load(file)
+    # user_db = UserDatabase()
+    # data_config_path = 'config/config.yaml'
+    # with open(data_config_path, 'r') as file:
+    #     data = yaml.safe_load(file)
 
-    watchlist = data.get('my_watchlist', [])    
-    USER_ID = os.getenv('USER_ID')
-    user_db.save_watch_list(user_id=USER_ID, watch_list=watchlist)
-    watch_list = user_db.get_watch_list(user_id=USER_ID)
+    # watchlist = data.get('my_watchlist', [])    
+    # USER_ID = os.getenv('USER_ID')
+    # user_db.save_watch_list(user_id=USER_ID, watch_list=watchlist)
+    # watch_list = user_db.get_watch_list(user_id=USER_ID)
 
 
 if __name__ == "__main__":

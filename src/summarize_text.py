@@ -19,21 +19,22 @@ from transformers import pipeline
 from bs4 import BeautifulSoup
 from src.Utils.utils import check_path, take_device, timeit
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     NewsURLLoader,
 )
 from unstructured.cleaners.core import clean_extra_whitespace
 from langchain.text_splitter import TokenTextSplitter
-from langchain_experimental.text_splitter import SemanticChunker
+# from langchain_experimental.text_splitter import SemanticChunker
 
-from langchain_community.llms import CTransformers
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from ctransformers import AutoModelForCausalLM, AutoTokenizer
+# from langchain_community.llms import CTransformers
+# from langchain.chains import LLMChain
+# from langchain.prompts import PromptTemplate
+# from ctransformers import AutoModelForCausalLM, AutoTokenizer
 from langchain_openai import OpenAI
 from datetime import datetime
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+from src.Utils.utils import convert_m4a_to_mp3, SpellCheck
 
 
 
@@ -76,97 +77,36 @@ class GoogleTranslator:
     def __init__(self):
         pass
 
-    def translate(self, text, to_lang):
+    def translate(self, text, to_lang, max_input_length=4900):
         url = 'https://translate.googleapis.com/translate_a/single'
-
-        params = {
-        'client': 'gtx',
-        'sl': 'auto',
-        'tl': to_lang,
-        # 'hl': from_lang,
-        'dt': ['t', 'bd'],
-        'dj': '1',
-        'source': 'popup5',
-        'q': text
-        }
+        
+        def get_translation_chunk(chunk):
+            params = {
+                'client': 'gtx',
+                'sl': 'auto',
+                'tl': to_lang,
+                'dt': ['t', 'bd'],
+                'dj': '1',
+                'source': 'popup5',
+                'q': chunk
+            }
+            response = requests.get(url, params=params, verify=False).json()
+            sentences = response['sentences']
+            translated_chunk = ""
+            for sentence in sentences:
+                translated_chunk += sentence['trans']
+            return translated_chunk
+        
+        if len(text) <= max_input_length:
+            return get_translation_chunk(text)
+        
         translated_text = ""
-        data = requests.get(url, params=params, verify=False).json()
-        sentences = data['sentences']
-        for sentence in sentences:
-            translated_text += f"{sentence['trans']}\n"
-        return translated_text
-
-class SpeechSummaryProcessor:
-    '''
-    Capture Ideas with Whisper and Translate them to English
-    https://colab.research.google.com/github/AndreDalwin/Whisper2Summarize/blob/main/Whisper2Summarize_Colab_Edition.ipynb#scrollTo=y3CCY-m4Wbo6
-    
-    audio =  # Make sure you upload the audio file (mp3,wav,m4a) into the session storage!
-    model = "base" #possible options are 'tiny', 'base', 'small', 'medium', and 'large'
-    '''
-    def __init__(self, audio_path: str, 
-                 whisper_model: Literal['base', 'small'] = 'base', 
-                 translator = GoogleTranslator(), 
-                 task_seperator = SeperateTaskPrompt()):
+        for i in range(0, len(text), max_input_length):
+            chunk = text[i:i + max_input_length]
+            translated_text += get_translation_chunk(chunk) + "\n"
         
-        # Step 1: Initialize the SpeechToTextProcessor
-        self.device = take_device()
-        self.whisper_model = whisper.load_model(whisper_model, device=self.device)
+        return translated_text.strip()
 
-        # Step 2: Load and preprocess the audio
-        self.audio_path = audio_path
-        self.audio = whisper.load_audio(audio_path)
-        self.translator = translator
-        self.task_seperator = task_seperator
-
-    def transcibe_text_from_sound(self):
-        # Step 3: Perform speech-to-text conversion
-        audio_copy = self.audio.copy()
-        self.result = self.whisper_model.transcribe(audio_copy, verbose=None, 
-                                               fp16=False, temperature=0.5)
-        self.language = self.result['language']
-        return self.result, self.language
-
-    def segment_text(self, result) -> str:
-        # Step 4: Segment the transcribed text
-        segments = result['segments']
-        # Join the segment texts into one string
-        segmented_text = '.'.join(segment['text'] for segment in segments)
-        try:
-            # Send the joined text to self.task_seperator.get_response() to get a list
-            self.response_list = self.task_seperator.get_response(text=segmented_text)
-            # Separate the received list by newline
-            titles = [task['title'] for task in self.response_list]
-            # Join titles into a single string with newline separator
-            segmented_text = '\n'.join(titles)
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            segmented_text = re.sub(r'[\.,\n]', '\n', segmented_text)  # Replace dots, commas, and newlines with newlines
-            segmented_text = segmented_text.replace(' and ', '\n')  # Replace 'and' with newlines separate
-            self.create_response_list()
-            
-        return segmented_text
-
-    def create_response_list(self):
-        self.response_list = None
-
-    def translate_to_english(self, text, to_lang='en'):
-        # Step 5: Translate the text to English
-        translated_text = self.translator.translate(text,to_lang=to_lang)
-        return translated_text
-
-    def generate_speech_to_text(self):
-        # Step 6: Perform the overall processing and translation
-        result, language = self.transcibe_text_from_sound()
-        segmented_text = self.segment_text(result)
-
-        if language == 'en':
-            return segmented_text
-        else:
-            return self.translate_to_english(segmented_text)
-        
-    def get_task_list(self):
-        return self.response_list
 
 class NewsScraper:
     '''
@@ -330,7 +270,7 @@ class NewsSummarizer:
         for model_output in self.summarizer(text, batch_size=8, 
                                             truncation="only_first",):
             text = model_output['summary_text']
-            sum_text += f'\n{text}'
+            sum_text += f'\n- {text}'
         return sum_text
     
     def summary_news(self, news:str)->str:
@@ -447,23 +387,115 @@ class StockNewsDatabase:
             json.dump(summary_data, json_file, ensure_ascii=False, indent=2)
         print(f"Summary data saved to {self.summary_news_data_path}")
         
+
+class SpeechSummaryProcessor:
+    '''
+    Capture Ideas with Whisper and Translate them to English
+    https://colab.research.google.com/github/AndreDalwin/Whisper2Summarize/blob/main/Whisper2Summarize_Colab_Edition.ipynb#scrollTo=y3CCY-m4Wbo6
+    
+    audio =  # Make sure you upload the audio file (mp3,wav,m4a) into the session storage!
+    model = "base" #possible options are 'tiny', 'base', 'small', 'medium', and 'large'
+    '''
+    def __init__(self, audio_path: str, 
+                 whisper_model: Literal['base', 'small'] = 'base', 
+                 translator = GoogleTranslator(), 
+                 task_seperator = SeperateTaskPrompt()):
+        
+        # Step 1: Initialize the SpeechToTextProcessor
+        self.device = take_device()
+        self.whisper_model = whisper.load_model(whisper_model, device=self.device)
+
+        # Step 2: Load and preprocess the audio
+        self.audio_path = audio_path
+        self.audio = whisper.load_audio(audio_path)
+        self.translator = translator
+        self.task_seperator = task_seperator
+        self.spell_checker = SpellCheck(history_tasks_path = 'data/todo_list.txt', n_grams = 3)
+        
+
+    def transcibe_text_from_sound(self):
+        # Step 3: Perform speech-to-text conversion
+        audio_copy = self.audio.copy()
+        self.result = self.whisper_model.transcribe(audio_copy, verbose=None, 
+                                               fp16=True, temperature=0.5,
+                                               logprob_threshold =0.5, 
+                                               initial_prompt = "Reminds me to do something in the to do lists. ",)
+        self.language = self.result['language']
+        return self.result, self.language
+    
+    def _post_processing_transcribed_text(self, text:str):
+        lang_dict={
+            "en": "en_US",
+            "vi": "vi_VN",
+        }
+        return self.spell_checker.spell_check_and_correct(text, method="BM25_EditDistance", loc_lang=lang_dict[self.language])
+
+
+    def segment_text(self, result) -> str:
+        # Step 4: Segment the transcribed text
+        segments = result['segments']
+        # Join the segment texts into one string
+        segmented_text = '.'.join(segment['text'] for segment in segments)
+        segmented_text = self._post_processing_transcribed_text(segmented_text)
+    
+        try:
+            # Send the joined text to self.task_seperator.get_response() to get a list
+            self.response_list = self.task_seperator.get_response(text=segmented_text)
+            # Separate the received list by newline
+            titles = [task['title'] for task in self.response_list]
+            # Join titles into a single string with newline separator
+            segmented_text = '\n'.join(titles)
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            segmented_text = re.sub(r'[\.,\n]', '\n', segmented_text)  # Replace dots, commas, and newlines with newlines
+            segmented_text = segmented_text.replace(' and ', '\n')  # Replace 'and' with newlines separate
+            self.create_response_list()
+            
+        return segmented_text
+
+    def create_response_list(self):
+        self.response_list = None
+
+    def translate_to_english(self, text, to_lang='en'):
+        # Step 5: Translate the text to English
+        translated_text = self.translator.translate(text,to_lang=to_lang)
+        return translated_text
+
+    def generate_speech_to_text(self):
+        # Step 6: Perform the overall processing and translation
+        result, language = self.transcibe_text_from_sound()
+        segmented_text = self.segment_text(result)
+
+        if language == 'en':
+            return segmented_text
+        else:
+            return self.translate_to_english(segmented_text)
+        
+    def get_task_list(self):
+        return self.response_list
+    
+
+
 if __name__ == "__main__":
-    # speech_to_text = SpeechSummaryProcessor(audio_path='sample_voice.m4a')
-    # text = speech_to_text.generate_speech_to_text()
-    # print ('Text', text)
+    
+    audio_path='data/audio_2.ogg'
+    speech_to_text = SpeechSummaryProcessor(audio_path=audio_path)
+    text = speech_to_text.generate_speech_to_text()
+    print ('Text', text)
 
-    symbol = 'SSI'
-    date_format='year'
-    news_scraper = NewsScraper()
-    news_list = news_scraper.search_stock_news(symbol=symbol, date_format=date_format)
-    news = news_scraper.take_text_from_link(news_url=news_list[0])
-    new_summarizer = NewsSummarizer()
-    sum_text = new_summarizer.summary_news(news= news)
-    print('sum_text', sum_text)
-    news_db = StockNewsDatabase()
-    print(news_db.get_all_stocks())
+    # symbol = 'SSI'
+    # date_format='year'
+    # news_scraper = NewsScraper()
+    # news_list = news_scraper.search_stock_news(symbol=symbol, date_format=date_format)
+    # # news_list = ["https://vnexpress.net/17-nam-cho-khep-kin-duong-vanh-dai-giup-giam-un-tac-noi-do-tp-hcm-4758932.html"]
+    # news = news_scraper.take_text_from_link(news_url=news_list[0])
+    # new_summarizer = NewsSummarizer()
+    # sum_text = new_summarizer.summary_news(news= news)
+    # print('sum_text', sum_text)
+    # news_db = StockNewsDatabase()
+    # print(news_db.get_all_stocks())
 
-    text = "I have to go to the gym at 9, and figure out the power of 2, I have to call my parent at 6 in my house, and do my homework with james"
-    seperator = SeperateTaskPrompt()
-    task_lists = seperator.get_response(text)
-    print(task_lists)
+    # text = "I have to go to the gym at 9, and figure out the power of 2, I have to call my parent at 6 in my house, and do my homework with james"
+    # seperator = SeperateTaskPrompt()
+    # task_lists = seperator.get_response(text)
+    # print(task_lists)

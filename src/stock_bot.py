@@ -103,7 +103,8 @@ def masterquest(message):
         # print(f'Result: {response.json()}')
         logger.debug(msg=f"Result: {response.json()}")
         bot.reply_to(message, f"The answer from {response.json()['model_type']}: \n{response.json()['result']}")
-        bot.send_message(message.chat.id, f"The source: {response.json()['source_documents']}")
+        # bot.send_message(message.chat.id, f"The source: {response.json()['source_documents'][0]}")
+        
     except Exception as e:
         # print(f'Error: {e}')
         logger.debug(msg=f"Error on LLM and RAG system: {e}")
@@ -357,7 +358,6 @@ def process_remove_stock(message):
     else:
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
         logger.debug(msg = f"{symbol} not found in your watchlist.")
-
 
 
 @bot.message_handler(commands=['remote'])
