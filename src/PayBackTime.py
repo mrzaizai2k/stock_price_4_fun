@@ -191,7 +191,7 @@ def pbt_pre_filter():
         # "avgTradingValue20Day": (100, 2000),  # Minimum 20-day average trading value
     #     "breakout": 'BULLISH',  # Only buy stocks when the market is in an uptrend
     }
-    df = filter_stocks(paybacktime_params)      
+    df = filter_stocks(paybacktime_params)     
     pbt_stocks = df.ticker.to_list()
     return pbt_stocks
 
@@ -201,7 +201,7 @@ def find_PBT_stocks(file_path="memory/paybacktime.csv"):
     pbt_stocks = pbt_pre_filter()
     pass_ticker = []
     for stock in pbt_stocks:
-        pbt_generator = pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
+        pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
         # pbt_generator.calculate_price()
         pbt_years = pbt_generator.calculate_payback_time()
         if pbt_years is not None and pbt_years <= 5:
