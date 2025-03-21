@@ -6,8 +6,6 @@ from vnstock import *
 from dotenv import load_dotenv
 load_dotenv()
 
-import cv2
-import subprocess
 import schedule
 import time
 import yaml
