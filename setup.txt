@@ -35,6 +35,7 @@ debugpy==1.8.0
 decorator==5.1.1
 defusedxml==0.7.1
 distro==1.8.0
+editdistance==0.8.1
 emoji==2.9.0
 exceptiongroup==1.1.3
 executing==2.0.1
@@ -132,6 +133,7 @@ nvidia-nvtx-cu12==12.1.105
 oauthlib==3.2.2
 openai==1.7.2
 openai-whisper @ git+https://github.com/openai/whisper.git@e58f28804528831904c3b6f2c0e473f346223433
+opencv-python==4.10.0.84
 outcome==1.3.0.post0
 overrides==7.4.0
 packaging==23.2
@@ -140,10 +142,12 @@ pandocfilters==1.5.0
 parso==0.8.3
 patsy==0.5.3
 pexpect==4.8.0
+phunspell==0.1.6
 pickleshare==0.7.5
 Pillow==10.1.0
 platformdirs==3.11.0
 plotly==5.18.0
+progress==1.6
 prometheus-client==0.18.0
 prompt-toolkit==3.0.39
 psutil==5.9.6
@@ -159,7 +163,10 @@ pydub==0.25.1
 Pygments==2.16.1
 pyjnius==1.6.1
 pyparsing==3.1.1
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.13.0
 PySocks==1.7.1
+pyspellchecker==0.8.1
 pyTelegramBotAPI==4.14.0
 python-dateutil==2.8.2
 python-dotenv==1.0.0
@@ -172,6 +179,7 @@ PyYAML==6.0.1
 pyzmq==25.1.1
 qtconsole==5.4.4
 QtPy==2.4.1
+rank-bm25==0.2.2
 rapidfuzz==3.6.1
 referencing==0.30.2
 regex==2023.10.3
@@ -184,16 +192,19 @@ rfc3986-validator==0.1.1
 rpds-py==0.12.0
 safetensors==0.4.1
 schedule==1.2.1
+scikit-learn==1.5.0
 scipy==1.11.3
 seaborn==0.13.0
-selenium==4.15.2
+selenium==4.18.1
 Send2Trash==1.8.2
+sentence-transformers==3.0.1
 setproctitle==1.3.3
 sgmllib3k==1.0.0
 six==1.16.0
 sniffio==1.3.0
 sortedcontainers==2.4.0
 soupsieve==2.5
+spylls==0.1.7
 SQLAlchemy==2.0.25
 stack-data==0.6.3
 statsmodels==0.14.0
@@ -203,6 +214,7 @@ tabulate==0.9.0
 tenacity==8.2.3
 termcolor==2.4.0
 terminado==0.17.1
+threadpoolctl==3.5.0
 tiktoken==0.5.2
 tinycss2==1.2.1
 tinysegmenter==0.3
@@ -222,7 +234,7 @@ trio-websocket==0.11.1
 triton==2.1.0
 types-python-dateutil==2.8.19.14
 typing-inspect==0.9.0
-typing_extensions==4.8.0
+typing_extensions==4.10.0
 tzdata==2023.3
 unstructured==0.11.8
 unstructured-client==0.15.1
