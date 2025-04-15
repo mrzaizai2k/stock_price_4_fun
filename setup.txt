@@ -253,3 +253,4 @@ wsproto==1.2.0
 xlrd==2.0.1
 yarl==1.9.3
 yaspin==3.0.1
+mcp

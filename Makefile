@@ -12,6 +12,9 @@ bot:
 # python -u src/stock_bot.py 2>&1 | tee logging/out.txt
 	python src/stock_bot.py
 
+mcp:
+	python src/mcp_server.py
+
 test:
 	python src/PayBackTime.py
 	python src/motif.py
