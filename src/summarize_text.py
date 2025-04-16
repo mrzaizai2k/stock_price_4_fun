@@ -497,15 +497,15 @@ if __name__ == "__main__":
     text = speech_to_text.generate_speech_to_text()
     print ('Text:', text)
 
-    # symbol = 'SSI'
-    # date_format='year'
-    # news_scraper = NewsScraper()
+    symbol = 'SSI'
+    date_format='year'
+    news_scraper = NewsScraper()
     # news_list = news_scraper.search_stock_news(symbol=symbol, date_format=date_format)
-    # # news_list = ["https://vnexpress.net/17-nam-cho-khep-kin-duong-vanh-dai-giup-giam-un-tac-noi-do-tp-hcm-4758932.html"]
-    # news = news_scraper.take_text_from_link(news_url=news_list[0])
-    # new_summarizer = NewsSummarizer()
-    # sum_text = new_summarizer.summary_news(news= news)
-    # print('sum_text', sum_text)
+    news_list = ["https://vnexpress.net/17-nam-cho-khep-kin-duong-vanh-dai-giup-giam-un-tac-noi-do-tp-hcm-4758932.html"]
+    news = news_scraper.take_text_from_link(news_url=news_list[0])
+    new_summarizer = NewsSummarizer()
+    sum_text = new_summarizer.summary_news(news= news)
+    print('sum_text', sum_text)
     # news_db = StockNewsDatabase()
     # print(news_db.get_all_stocks())
 

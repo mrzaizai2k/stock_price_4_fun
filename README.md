@@ -18,6 +18,7 @@
 3. [Summarize Sound](#summarize-sound)
 3. [Summarize News](#summarize-news)
 3. [LLM with RAG system](#llm-with-rag-system)
+3. [MCP server](#mcp-server)
 3. [Example Uses](#example-uses)
 3. [To-Do List](#to-do-list)
 
@@ -213,6 +214,46 @@ If you prefer a more direct approach, simply use the command `/summarynewsurl` a
 ## LLM with RAG system 
 
 The system can anwser the questions based on my doccuments (for my master courses). It will ask the port 8083 and get the response. Refer to my [LLM with RAG](https://github.com/mrzaizai2k/LLM-with-RAG/tree/main) repo for more information
+
+## MCP server
+
+Using fastAPI-mcp package
+
+```cmd
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   set Path=C:\Users\Admin\.local\bin;%Path%
+   uv tool install mcp-proxy
+```
+
+run mcp server in `src/mcp_server.py`
+
+Then edit config in Claude Desktop in `C:\Users\Admin\AppData\Roaming\Claude\claude_desktop_config.json` like this
+
+```
+{
+    "mcpServers": {
+      "filesystem": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "C:\\Users\\Admin\\Desktop",
+          "C:\\Users\\Admin\\Downloads",
+          "D:\\"
+        ]
+      },
+      "paybacktime": {
+        "command": "mcp-proxy",
+        "args": ["http://127.0.0.1:8668/mcp"]
+    }
+    }
+  }
+```
+
+Reference: 
+- https://github.com/tadata-org/fastapi_mcp
+- https://modelcontextprotocol.io/quickstart/server#windows
+- https://github.com/modelcontextprotocol/servers?tab=readme-ov-file
 
 ## Example Uses
 

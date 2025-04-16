@@ -15,6 +15,9 @@ bot:
 mcp:
 	python src/mcp_server.py
 
+api:
+	python src/api.py
+
 test:
 	python src/PayBackTime.py
 	python src/motif.py
