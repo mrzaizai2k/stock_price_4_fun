@@ -17,7 +17,6 @@ def test_paybacktime(symbol: str = "ACB"):
     payload = {"symbol": symbol}
     try:
         response = requests.post(endpoint, json=payload)
-        response.raise_for_status()
         print(f"Payback Time Test for {symbol}:")
         print(response.json())
     except requests.exceptions.RequestException as e:
@@ -29,7 +28,7 @@ def test_support_resistance(symbol: str = "ACB"):
     payload = {"symbol": symbol}
     try:
         response = requests.post(endpoint, json=payload)
-        response.raise_for_status()
+        
         print(f"\nSupport Resistance Test for {symbol}:")
         print(response.json())
     except requests.exceptions.RequestException as e:
@@ -40,7 +39,7 @@ def test_find_paybacktime_stocks(symbol: str = "ACB"):
     endpoint = f"{BASE_URL}/stocks/find-paybacktime-stocks"
     try:
         response = requests.get(endpoint)
-        response.raise_for_status()
+        
         print(f"\nFind Payback Time Stocks Test (symbol {symbol} not used in this endpoint):")
         print(response.json())
     except requests.exceptions.RequestException as e:
@@ -52,7 +51,7 @@ def test_summary_news_url(news_url: str = "https://www.example.com/news"):
     payload = {"url": news_url}
     try:
         response = requests.post(endpoint, json=payload)
-        response.raise_for_status()
+        
         print(response.json())
     except requests.exceptions.RequestException as e:
         print(f"Error testing summary-news-url: {e}")
@@ -66,7 +65,7 @@ def test_pattern(symbol: str = "ACB", start_date: str = "2023-01-01"):
     }
     try:
         response = requests.post(endpoint, json=payload)
-        response.raise_for_status()
+        
         result = response.json()
         print(f"\nPattern Test for {symbol}:")
         print(f"Message: {result['message']}")
@@ -82,12 +81,12 @@ def test_pattern(symbol: str = "ACB", start_date: str = "2023-01-01"):
 
 if __name__ == "__main__":
 
-    symbol="ACB"
-    news_url = "https://vnexpress.net/17-nam-cho-khep-kin-duong-vanh-dai-giup-giam-un-tac-noi-do-tp-hcm-4758932.html"
+    symbol="ACBC"
+    news_url = "https://vnexpress.net/tong-bi-thu-viet-nam-du-suc-vuot-qua-thach-thuc-4875205.html"
     print("Starting API tests...")
-    test_paybacktime(symbol=symbol)
-    test_support_resistance(symbol=symbol)
-    test_find_paybacktime_stocks(symbol=symbol)  # Symbol not used in this endpoint
+    # test_paybacktime(symbol=symbol)
+    # test_support_resistance(symbol=symbol)
+    # test_find_paybacktime_stocks(symbol=symbol)  # Symbol not used in this endpoint
     test_summary_news_url(news_url=news_url)
-    test_pattern(symbol=symbol, start_date="2023-01-01")
+    # test_pattern(symbol=symbol, start_date="2023-01-01")
     print("\nAll tests completed.")

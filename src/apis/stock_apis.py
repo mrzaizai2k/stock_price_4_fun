@@ -11,7 +11,8 @@ from src.motif import MotifMatching, BestMarketMotifSearch
 from src.support_resist import SupportResistFinding
 from src.trading_record import BuySellAnalyzer, WinLossAnalyzer, AssetAnalyzer
 from src.summarize_text import NewsSummarizer, NewsScraper
-from src.Utils.utils import filter_stocks, general_rating, config_parser
+from src.Utils.utils import filter_stocks, general_rating, config_parser, validate_symbol
+from functools import wraps
 
 router = APIRouter(prefix="/stocks", tags=["Stock Operations"])
 
@@ -27,7 +28,16 @@ class PatternRequest(BaseModel):
 class NewsSummaryRequest(BaseModel):
     url: str
 
+def validate_symbol_decorator(func):
+    @wraps(func)
+    async def wrapper(request: SymbolRequest | PatternRequest, *args, **kwargs):
+        if not validate_symbol(request.symbol.upper()):
+            raise HTTPException(status_code=400, detail=f"Invalid symbol: {request.symbol}")
+        return await func(request, *args, **kwargs)
+    return wrapper
+
 @router.post("/paybacktime")
+@validate_symbol_decorator
 async def get_paybacktime(request: SymbolRequest):
     try:
         pbt_params = data.get('pbt_params')
@@ -38,6 +48,7 @@ async def get_paybacktime(request: SymbolRequest):
         raise HTTPException(status_code=500, detail=f"Error calculating payback time: {str(e)}")
 
 @router.post("/support-resistance")
+@validate_symbol_decorator
 async def get_support_resistance(request: SymbolRequest):
     try:
         sr_finding = SupportResistFinding(symbol=request.symbol.upper())
@@ -79,6 +90,7 @@ async def find_favorite_stocks():
         raise HTTPException(status_code=500, detail=f"Error finding favorite stocks: {str(e)}")
 
 @router.post("/risk")
+@validate_symbol_decorator
 async def calculate_risk(request: SymbolRequest):
     try:
         stock_generator = Stock(symbol=request.symbol.upper())
@@ -103,6 +115,7 @@ async def calculate_risk(request: SymbolRequest):
         raise HTTPException(status_code=500, detail=f"Error calculating risk: {str(e)}")
 
 @router.post("/rate")
+@validate_symbol_decorator
 async def rate_stock(request: SymbolRequest):
     try:
         symbol = request.symbol.upper()
@@ -116,6 +129,7 @@ async def rate_stock(request: SymbolRequest):
         raise HTTPException(status_code=500, detail=f"Error rating stock: {str(e)}")
 
 @router.post("/multi-pattern")
+@validate_symbol_decorator
 async def find_multi_pattern(request: PatternRequest):
     try:
         motif_matching = MotifMatching(symbol=request.symbol.upper(), start_date=request.start_date)
@@ -128,6 +142,7 @@ async def find_multi_pattern(request: PatternRequest):
         raise HTTPException(status_code=500, detail=f"Error finding multi-dimension pattern: {str(e)}")
 
 @router.post("/pattern")
+@validate_symbol_decorator
 async def find_pattern(request: PatternRequest):
     try:
         motif_matching = MotifMatching(symbol=request.symbol.upper(), start_date=request.start_date)
@@ -148,14 +163,15 @@ async def find_best_motif():
         for stock, values in result_dict.items():
             start_date, end_date, distance = values
             report += f"Stock: {stock}\n"
-            report += f"- Date: {start_date} to {end_date}\n"
-            report += f"- Distance: {distance:.3f}\n\n"
+            f"- Date: {start_date} to {end_date}\n"
+            f"- Distance: {distance:.3f}\n\n"
         report += f"Use /mulpattern to see the pattern of each stock with date: {market_motif_search.start_date}"
         return {"report": report}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error finding best motif: {str(e)}")
 
 @router.post("/buy-sell-analyze")
+@validate_symbol_decorator
 async def buy_sell_analyze(request: SymbolRequest):
     try:
         buy_sell_df_path = data.get('buy_sell_df_path', None)
