@@ -79,106 +79,76 @@ def test_pattern(symbol: str = "ACB", start_date: str = "2023-01-01"):
     except binascii.Error as e:
         print(f"Error decoding image data for {symbol}: {e}")
 
-
-
-def test_remote(user_id: str = "12345"):
+def test_remote():
     """Test the /mcp/remote endpoint (opens VS Code tunnel)"""
     endpoint = f"{BASE_URL}/mcp/remote"
-    headers = {"user_id": str(user_id)}
     try:
-        response = requests.post(endpoint, headers=headers)
+        response = requests.post(endpoint)
         response.raise_for_status()
         result = response.json()
-        print(f"\nRemote Test (user_id={user_id}):")
+        print("\nRemote Test:")
         print(f"Message: {result['message']}")
     except requests.exceptions.RequestException as e:
-        print(f"Error testing remote for user_id={user_id}: {e.response.json() if e.response else e}")
+        print(f"Error testing remote: {e.response.json() if e.response else e}")
 
-def test_log(user_id: str = "12345"):
+def test_log():
     """Test the /mcp/log endpoint (returns log file)"""
     endpoint = f"{BASE_URL}/mcp/log"
-    headers = {"user_id": str(user_id)}
     try:
-        response = requests.get(endpoint, headers=headers)
+        response = requests.get(endpoint)
         response.raise_for_status()
         result = response.json()
-        print(f"\nLog Test (user_id={user_id}):")
+        print("\nLog Test:")
         # Save log file for verification
         log_data = binascii.unhexlify(result['log'])
-        with open(f"test_log_file_{user_id}.log", "wb") as f:
+        with open("test_log_file.log", "wb") as f:
             f.write(log_data)
-        print(f"Log file saved as test_log_file_{user_id}.log")
+        print("Log file saved as test_log_file.log")
     except requests.exceptions.RequestException as e:
-        print(f"Error testing log for user_id={user_id}: {e.response.json() if e.response else e}")
+        print(f"Error testing log: {e.response.json() if e.response else e}")
     except binascii.Error as e:
-        print(f"Error decoding log data for user_id={user_id}: {e}")
+        print(f"Error decoding log data: {e}")
 
-def test_scrape(user_id: str = "12345"):
+def test_scrape():
     """Test the /mcp/scrape endpoint (scrapes trading data and news)"""
     endpoint = f"{BASE_URL}/mcp/scrape"
-    payload = {"user_id": int(user_id)}
+    payload = {}
     try:
         response = requests.post(endpoint, json=payload)
         response.raise_for_status()
         result = response.json()
-        print(f"\nScrape Test (user_id={user_id}):")
+        print("\nScrape Test:")
         print(f"Message: {result['message']}")
     except requests.exceptions.RequestException as e:
-        print(f"Error testing scrape for user_id={user_id}: {e.response.json() if e.response else e}")
+        print(f"Error testing scrape: {e.response.json() if e.response else e}")
 
-def test_masterquest(query: str = "What is the stock market?", user_id: str = "12345"):
+def test_masterquest(query: str = "Who is Karger?"):
     """Test the /mcp/masterquest endpoint (queries LLM and RAG system)"""
     endpoint = f"{BASE_URL}/mcp/masterquest"
     payload = {
         "query": query,
-        "user_id": int(user_id)
     }
     try:
         response = requests.post(endpoint, json=payload)
         response.raise_for_status()
         result = response.json()
-        print(f"\nMasterquest Test (user_id={user_id}):")
+        print("\nMasterquest Test:")
         print(f"Model Type: {result['model_type']}")
         print(f"Result: {result['result']}")
     except requests.exceptions.RequestException as e:
-        print(f"Error testing masterquest for user_id={user_id}: {e.response.json() if e.response else e}")
+        print(f"Error testing masterquest: {e.response.json() if e.response else e}")
 
-def test_update_vectordb(user_id: str = "12345"):
+def test_update_vectordb():
     """Test the /mcp/update-vectordb endpoint (updates vector database)"""
     endpoint = f"{BASE_URL}/mcp/update-vectordb"
-    headers = {"user_id": str(user_id)}
     try:
-        response = requests.post(endpoint, headers=headers)
+        response = requests.post(endpoint)
         response.raise_for_status()
         result = response.json()
-        print(f"\nUpdate VectorDB Test (user_id={user_id}):")
+        print("\nUpdate VectorDB Test:")
         print(f"Message: {result['message']}")
     except requests.exceptions.RequestException as e:
-        print(f"Error testing update-vectordb for user_id={user_id}: {e.response.json() if e.response else e}")
-
-def test_unauthorized_access():
-    """Test all /mcp endpoints with an invalid user_id to verify 403 errors"""
-    endpoints = [
-        (f"{BASE_URL}/mcp/remote", "POST", {"user_id": INVALID_USER_ID}, None),
-        (f"{BASE_URL}/mcp/log", "GET", {"user_id": INVALID_USER_ID}, None),
-        (f"{BASE_URL}/mcp/scrape", "POST", None, {"user_id": int(INVALID_USER_ID)}),
-        (f"{BASE_URL}/mcp/masterquest", "POST", None, {"query": "Test query", "user_id": int(INVALID_USER_ID)}),
-        (f"{BASE_URL}/mcp/update-vectordb", "POST", {"user_id": INVALID_USER_ID}, None)
-    ]
-    for endpoint, method, headers, payload in endpoints:
-        try:
-            if method == "POST":
-                response = requests.post(endpoint, headers=headers, json=payload)
-            else:
-                response = requests.get(endpoint, headers=headers)
-            print(f"\nUnauthorized Access Test ({endpoint}):")
-            if response.status_code == 403:
-                print(f"Expected 403 error: {response.json()['detail']}")
-            else:
-                print(f"Unexpected status code {response.status_code}: {response.json()}")
-        except requests.exceptions.RequestException as e:
-            print(f"Error testing unauthorized access for {endpoint}: {e.response.json() if e.response else e}")
-
+        print(f"Error testing update-vectordb: {e.response.json() if e.response else e}")
 
 if __name__ == "__main__":
 
@@ -194,13 +164,10 @@ if __name__ == "__main__":
     VALID_USER_ID = os.getenv("MRZAIZAI2K_ID", "123456")  # Set to actual MRZAIZAI2K_ID
     INVALID_USER_ID = "999999"
 
-    # New tests for /mcp endpoints
-    test_remote(user_id=VALID_USER_ID)
-    test_log(user_id=VALID_USER_ID)
-    test_scrape(user_id=VALID_USER_ID)
-    test_masterquest(query="What is the stock market?", user_id=VALID_USER_ID)
-    test_update_vectordb(user_id=VALID_USER_ID)
+    test_remote()
+    test_log()
+    test_scrape()
+    test_masterquest()
+    # test_update_vectordb()
 
-    # Test unauthorized access for all endpoints
-    test_unauthorized_access()
     print("\nAll tests completed.")

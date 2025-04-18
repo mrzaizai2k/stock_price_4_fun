@@ -91,29 +91,39 @@ def ask_for_question(message):
 
 def masterquest(message):
     query = message.text
-    masterquest_url = data.get('masterquest_url')
     try:
-        response = requests.post(masterquest_url, json={'query': query})
-        logger.debug(msg=f"Result: {response.json()}")
-        bot.reply_to(message, f"The answer from {response.json()['model_type']}: \n{response.json()['result']}")
-    except Exception as e:
-        logger.debug(msg=f"Error on LLM and RAG system: {e}")
-        print('You might need to run the LLM with RAG system on port 8083')
-        bot.send_message(message.chat.id, "Error on connecting the LLM and RAG system")
+        
+        endpoint = f"{BASE_URL}/mcp/masterquest"
+        payload = {
+            "query": query,
+        }
+        response = requests.post(endpoint, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        bot.reply_to(message, f"The answer from {data['model_type']}: \n{data['result']}")
+        logger.debug(msg=f"Masterquest result: {data}")
+    except requests.exceptions.RequestException as e:
+        logger.debug(msg=f"Error calling /mcp/masterquest: {str(e)}")
+        bot.send_message(message.chat.id, f"Error on connecting the LLM and RAG system: {str(e)}")
+
 
 @bot.message_handler(commands=['updatevectordb'])
 def updatevectordb(message):
     if not validate_mrzaizai2k_user(message.chat.id):
         bot.send_message(message.chat.id, "This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code")
         return
-    updatevectordb_url = data.get('updatevectordb_url')
-    response = requests.post(updatevectordb_url)
-    if response.status_code == 200:
-        logger.debug(msg="Update Vector DB Successful: Update was successful")
-        bot.send_message(message.chat.id, "Update was successful")
-    else:
-        logger.debug(msg=f"Update Vector DB Failed: {response.status_code} - {response.json()['message']}")
-        bot.send_message(message.chat.id, f"Update failed: {response.json()['message']}")
+    try:
+        response = requests.post(
+            f"{BASE_URL}/mcp/update-vectordb",
+        )
+        response.raise_for_status()
+        data = response.json()
+        bot.send_message(message.chat.id, data["message"])
+        logger.debug(msg=f"Update Vector DB: {data['message']}")
+    except requests.exceptions.RequestException as e:
+        logger.debug(msg=f"Error calling /mcp/update-vectordb: {str(e)}")
+        bot.send_message(message.chat.id, f"Error updating vector DB: {str(e)}")
+
 
 def find_similar_pattern(message, symbol):
     start_date = message.text
@@ -330,15 +340,19 @@ def process_remove_stock(message):
         bot.send_message(message.chat.id, f"{symbol} not found in your watchlist.")
         logger.debug(msg=f"{symbol} not found in your watchlist.")
 
+
+
 @bot.message_handler(commands=['remote'])
 def open_vscode_tunnel(message):
     if not validate_mrzaizai2k_user(message.chat.id):
-        mess = "This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code"
+        mess = f"This command can just be used by the owner (mrzaizai2k).\nIf you want to use this, clone the git repo and modify the code"
         bot.send_message(message.chat.id, mess)
         logger.info(mess)
         return
-    bot.reply_to(message, "VS Code remote tunnel Opening...")
+    bot.reply_to(message, f"VS Code remote tunnel Opening...")
     Thread(target=run_vscode_tunnel, args=(bot, message)).start()
+
+
 
 def warning_stock():
     times = data.get('times', [])
@@ -436,12 +450,17 @@ def scrape_data(message):
         logger.info(mess)
         return
     bot.send_message(message.chat.id, "Please wait. This process can take several minutes")
-    scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)
-    bot.send_message(message.chat.id, "Done scraping trading data!")
-    logger.info(msg="Done scraping trading data!")
-    summary_news_daily()
-    bot.send_message(message.chat.id, "Done updating news!")
-    logger.info(msg="Done updating news!")
+    try:
+        response = requests.post(
+            f"{BASE_URL}/mcp/scrape",
+        )
+        response.raise_for_status()
+        data = response.json()
+        bot.send_message(message.chat.id, data["message"])
+        logger.debug(msg=f"Scrape result: {data['message']}")
+    except requests.exceptions.RequestException as e:
+        logger.debug(msg=f"Error calling /mcp/scrape: {str(e)}")
+        bot.send_message(message.chat.id, f"Error scraping data: {str(e)}")
 
 @bot.message_handler(commands=['log'])
 def send_log(message):
@@ -450,14 +469,18 @@ def send_log(message):
         bot.send_message(message.chat.id, mess)
         logger.info(mess)
         return
-    log_file_path = data.get('log_file_path')
     try:
-        with open(log_file_path, 'rb') as log_file:
-            bot.send_document(message.chat.id, log_file)
-    except FileNotFoundError:
-        bot.send_message(message.chat.id, "Log file not found.")
-    except Exception as e:
-        bot.send_message(message.chat.id, f"An error occurred: {e}")
+        response = requests.get(
+            f"{BASE_URL}/mcp/log",
+        )
+        response.raise_for_status()
+        data = response.json()
+        log_data = bytes.fromhex(data["log"])
+        bot.send_document(message.chat.id, io.BytesIO(log_data), visible_file_name="mcp_apis.log")
+        logger.debug(msg="Log file sent successfully")
+    except requests.exceptions.RequestException as e:
+        logger.debug(msg=f"Error calling /mcp/log: {str(e)}")
+        bot.send_message(message.chat.id, f"Error retrieving log file: {str(e)}")
 
 @bot.message_handler(content_types=['audio', 'voice'])
 def summarize_sound(message):
@@ -481,7 +504,7 @@ def summarize_sound(message):
     if text is None:
         return
     reply_markup = handle_checklist(text)
-    bot.send_message(message.chat.id, 'Click to toggle', reply_markup=relay_markup)
+    bot.send_message(message.chat.id, 'Click to toggle', reply_markup=reply_markup)
     tasks_list = speech_to_text.get_task_list()
     logger.debug(msg=f'tasks_list: {tasks_list}')
     if tasks_list is not None and validate_mrzaizai2k_user(message.chat.id):
