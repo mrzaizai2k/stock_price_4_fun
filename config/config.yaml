@@ -37,4 +37,4 @@ help_commands_path: 'config/help_command.txt'
 
 start_commands_path: 'config/start_command.txt'
 
-log_file_path: 'logging/out.txt'
+log_file_path: 'logging/stock_bot.log'

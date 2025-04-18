@@ -273,6 +273,17 @@ def validate_mrzaizai2k_user(user_id):
         return False
     return True
 
+def check_server_status(url:str, logger):
+    try:
+        response = requests.get(f"{url}/health", timeout=5)
+        return response.status_code == 200
+    except requests.RequestException as e:
+        msg = f"The server is not running on {url}, please run it first by using 'make api' command"
+        print(msg)
+        if logger:
+            logger.error(msg)
+        return False
+
 def read_commands_from_file(filename):
     with open(filename, 'r') as file:
         commands_string = file.read()

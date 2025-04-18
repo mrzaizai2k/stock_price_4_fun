@@ -29,6 +29,8 @@ host = data.get('api_host', '0.0.0.0')
 port = data.get('api_port', 8000)
 BASE_URL = f"http://{host}:{port}"
 
+check_server_status(url = BASE_URL, logger = logger)
+    
 try:
     TRADE_USER = os.getenv('TRADE_USER')
     TRADE_PASS = os.getenv('TRADE_PASS')

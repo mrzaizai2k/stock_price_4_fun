@@ -610,3 +610,4 @@ if __name__=="__main__":
     TRADE_PASS= os.getenv('TRADE_PASS')
     # scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)
     scrape_trading_data(user_name=TRADE_USER, password=TRADE_PASS)
+

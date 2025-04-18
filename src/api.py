@@ -10,6 +10,11 @@ from src.Utils.utils import config_parser
 
 app = FastAPI(title="Stock Bot API", description="API for stock analysis and control panel operations")
 
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Include routers
 app.include_router(stocks_router)
 app.include_router(mcp_router)
