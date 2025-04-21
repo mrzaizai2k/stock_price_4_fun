@@ -28,6 +28,8 @@ mcp = FastApiMCP(
     name="Item API MCP",
     description="MCP server for the Item API",
     base_url="http://localhost:8668",
+    describe_all_responses=True,
+    describe_full_response_schema=True,
 )
 
 mcp.mount()

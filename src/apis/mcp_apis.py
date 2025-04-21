@@ -22,8 +22,12 @@ class ScrapeRequest(BaseModel):
     pass
 
 
-@router.get("/log", operation_id="get_log_file")
+@router.get(
+    "/log",
+    operation_id="get_log_file",
+)
 async def get_log_file():
+    """Retrieves the content of the application's log file"""
     log_file_path = data.get('log_file_path')
     try:
         with open(log_file_path, 'rb') as log_file:
@@ -35,8 +39,12 @@ async def get_log_file():
         logger.debug(msg=f"Error reading log file: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error reading log file: {str(e)}")
 
-@router.post("/scrape", operation_id="scrape_trading_data_and_news")
+@router.post(
+    "/scrape",
+    operation_id="scrape_trading_data_and_news",
+)
 async def scrape_data(request: ScrapeRequest):
+    """Scrapes trading data and updates news using provided credentials"""
     try:
         TRADE_USER = os.getenv('TRADE_USER')
         TRADE_PASS = os.getenv('TRADE_PASS')
@@ -47,8 +55,12 @@ async def scrape_data(request: ScrapeRequest):
         logger.debug(msg=f"Error scraping data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error scraping data: {str(e)}")
 
-@router.post("/masterquest", operation_id="masterquest_query")
+@router.post(
+    "/masterquest",
+    operation_id="masterquest_query",
+)
 async def masterquest(request: MasterQuestRequest):
+    """Processes a query through the MasterQuest LLM and RAG system"""
     masterquest_url = data.get('masterquest_url')
     try:
         response = requests.post(masterquest_url, json={'query': request.query})
@@ -62,8 +74,12 @@ async def masterquest(request: MasterQuestRequest):
         logger.debug(msg=f"Error on LLM and RAG system: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error on LLM and RAG system: {str(e)}")
 
-@router.post("/update-vectordb", operation_id="update_vector_database")
+@router.post(
+    "/update-vectordb",
+    operation_id="update_vector_database",
+)
 async def update_vector_db():
+    """Updates the vector database for improved query performance"""
     updatevectordb_url = data.get('updatevectordb_url')
     try:
         response = requests.post(updatevectordb_url)

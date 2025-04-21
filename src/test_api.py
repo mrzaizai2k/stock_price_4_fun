@@ -152,22 +152,22 @@ def test_update_vectordb():
 
 if __name__ == "__main__":
 
-    symbol="ACBC"
+    symbol="ACB"
     news_url = "https://cafef.vn//mot-cong-ty-bds-khu-cong-nghiep-bao-lai-rong-quy-1-2025-tang-106-ky-moi-3-mou-gan-10ha-188250416140034188.chn"
     print("Starting API tests...")
-    # test_paybacktime(symbol=symbol)
-    # test_support_resistance(symbol=symbol)
+    test_paybacktime(symbol=symbol)
+    test_support_resistance(symbol=symbol)
     # test_find_paybacktime_stocks(symbol=symbol)  # Symbol not used in this endpoint
     test_summary_news_url(news_url=news_url)
-    # test_pattern(symbol=symbol, start_date="2023-01-01")
+    test_pattern(symbol=symbol, start_date="2023-01-01")
 
     VALID_USER_ID = os.getenv("MRZAIZAI2K_ID", "123456")  # Set to actual MRZAIZAI2K_ID
     INVALID_USER_ID = "999999"
 
-    test_remote()
-    test_log()
-    test_scrape()
-    test_masterquest()
+    # test_remote()
+    # test_log()
+    # test_scrape()
+    # test_masterquest()
     # test_update_vectordb()
 
     print("\nAll tests completed.")
