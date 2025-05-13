@@ -1,14 +1,19 @@
 import sys
 sys.path.append("")
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 import os
 import requests
+from tavily import TavilyClient
+from datetime import datetime
+
+
 from src.trading_record import scrape_trading_data
 from src.Utils.utils import config_parser
 from src.Utils.logger import create_logger
-
+from src.Microsofttodo import MicrosoftToDo
 
 router = APIRouter(prefix="/mcp", tags=["Miscellaneous Control Panel"])
 
@@ -20,6 +25,20 @@ class MasterQuestRequest(BaseModel):
 
 class ScrapeRequest(BaseModel):
     pass
+
+class TavilySearchRequest(BaseModel):
+    query: str
+
+def get_todo_client():
+    return MicrosoftToDo()
+
+# Pydantic model for create task request
+class CreateTaskRequest(BaseModel):
+    task_name: str
+    importance: Optional[bool] = False
+    due_date_time: Optional[str] = None  # Format: YYYY-MM-DD:HH:MM:SS
+    body: Optional[dict] = None
+    reminder_date_time: Optional[str] = None  # Format: YYYY-MM-DD:HH:MM:SS
 
 
 @router.get(
@@ -92,3 +111,89 @@ async def update_vector_db():
     except Exception as e:
         logger.debug(msg=f"Error updating vector DB: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating vector DB: {str(e)}")
+
+@router.post(
+    "/tavily-search",
+    operation_id="tavily_search",
+)
+async def tavily_search(request: TavilySearchRequest):
+    """Performs a search using the Tavily API"""
+    try:
+        TAVILY_KEY = os.getenv('TAVILY_KEY')
+        if not TAVILY_KEY:
+            raise HTTPException(status_code=500, detail="Tavily API key not configured")
+        
+        client = TavilyClient(TAVILY_KEY)
+        response = client.search(query=request.query)
+        logger.debug(msg=f"Tavily search result: {response}")
+        return {"results": response}
+    except Exception as e:
+        logger.debug(msg=f"Error performing Tavily search: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error performing Tavily search: {str(e)}")
+    
+
+
+# Endpoint to get tasks from "Tasks" list
+@router.get(
+    "/tasks",
+    operation_id="get_tasks",
+)
+async def get_tasks(
+    num_tasks: int = 100,
+    get_completed: bool = False,
+    todo: MicrosoftToDo = Depends(get_todo_client)
+):
+    """Retrieve tasks from the 'Tasks' list in Microsoft ToDo."""
+    try:
+        tasks = todo.get_tasks(
+            list_name="Tasks",
+            num_tasks=num_tasks,
+            get_completed=get_completed
+        )
+        logger.debug(f"Retrieved {len(tasks)} tasks from 'Tasks' list")
+        return {"tasks": tasks}
+    except Exception as e:
+        # Check if the error is related to the list not being found
+        error_message = str(e)
+        if "404" in error_message or "not found" in error_message.lower():
+            logger.error(f"Tasks list not found: {error_message}")
+            raise HTTPException(status_code=404, detail="Tasks list not found")
+        logger.error(f"Error retrieving tasks: {error_message}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving tasks: {error_message}")
+
+# Endpoint to create a task in "Tasks" list
+@router.post(
+    "/tasks",
+    operation_id="create_task",
+)
+async def create_task(
+    request: CreateTaskRequest,
+    todo: MicrosoftToDo = Depends(get_todo_client)
+):
+    """Create a new task in the 'Tasks' list in Microsoft ToDo."""
+    try:
+
+        # Create the task
+        result = todo.create_task(
+            task_name=request.task_name,
+            list_name="Tasks",
+            importance=request.importance,
+            dueDateTime=request.due_date_time,
+            body=request.body,
+            reminder_datetime=request.reminder_date_time
+        )
+        if not result:
+            raise HTTPException(status_code=500, detail="Failed to create task")
+        logger.debug(f"Created task '{request.task_name}' in 'Tasks' list")
+        return {"status": "success", "message": f"Task '{request.task_name}' created successfully"}
+    except Exception as e:
+        # Check for specific error cases
+        error_message = str(e)
+        if "404" in error_message or "not found" in error_message.lower():
+            logger.error(f"Tasks list not found: {error_message}")
+            raise HTTPException(status_code=404, detail="Tasks list not found")
+        if "400" in error_message or "invalid" in error_message.lower():
+            logger.error(f"Invalid request: {error_message}")
+            raise HTTPException(status_code=400, detail=f"Invalid request: {error_message}")
+        logger.error(f"Error creating task: {error_message}")
+        raise HTTPException(status_code=500, detail=f"Error creating task: {error_message}")

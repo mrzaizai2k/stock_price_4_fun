@@ -2,6 +2,7 @@ import sys
 sys.path.append("")
 import requests
 import os
+from datetime import datetime
 from src.Utils.utils import config_parser
 import binascii
 
@@ -150,24 +151,67 @@ def test_update_vectordb():
     except requests.exceptions.RequestException as e:
         print(f"Error testing update-vectordb: {e.response.json() if e.response else e}")
 
+
+def test_get_tasks(num_tasks=10, get_completed=False):
+    """Test the /todo/tasks GET endpoint (retrieves tasks from 'Tasks' list)"""
+    endpoint = f"{BASE_URL}/mcp/tasks"
+    params = {"num_tasks": num_tasks, "get_completed": get_completed}
+    try:
+        response = requests.get(endpoint, params=params)
+        response.raise_for_status()
+        result = response.json()
+        print("\nGet Tasks Test:")
+        print(f"Retrieved {len(result['tasks'])} tasks")
+        print(f"Sample task titles: {[task['title'] for task in result['tasks'][:2]]}")
+    except requests.exceptions.RequestException as e:
+        error_msg = e.response.json() if e.response else str(e)
+        print(f"Error testing get-tasks: {error_msg}")
+
+def test_create_task():
+    """Test the /todo/tasks POST endpoint (creates a task in 'Tasks' list)"""
+    endpoint = f"{BASE_URL}/mcp/tasks"
+    # Create a unique task name with timestamp to avoid duplicates
+    task_name = f"Test Task {datetime.now().strftime('%Y%m%d%H%M%S')}"
+    payload = {
+        "task_name": task_name,
+        "importance": True,
+        "due_date_time": "2025-05-14:14:00:00",
+        "body": {"content": "Test task description", "contentType": "text"}
+    }
+    print("\nCreate Task Test Payload:")
+    print(payload)
+    try:
+        response = requests.post(endpoint, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        print("\nCreate Task Test:")
+        print(f"Message: {result['message']}")
+    except requests.exceptions.RequestException as e:
+        error_msg = e.response.json() if e.response else str(e)
+        print(f"Error testing create-task: {error_msg}")
+        print(f"Response status: {e.response.status_code if e.response else 'No response'}")
+
 if __name__ == "__main__":
 
     symbol="ACB"
     news_url = "https://cafef.vn//mot-cong-ty-bds-khu-cong-nghiep-bao-lai-rong-quy-1-2025-tang-106-ky-moi-3-mou-gan-10ha-188250416140034188.chn"
     print("Starting API tests...")
-    test_paybacktime(symbol=symbol)
-    test_support_resistance(symbol=symbol)
-    # test_find_paybacktime_stocks(symbol=symbol)  # Symbol not used in this endpoint
-    test_summary_news_url(news_url=news_url)
-    test_pattern(symbol=symbol, start_date="2023-01-01")
+    # test_paybacktime(symbol=symbol)
+    # test_support_resistance(symbol=symbol)
+    # # test_find_paybacktime_stocks(symbol=symbol)  # Symbol not used in this endpoint
+    # test_summary_news_url(news_url=news_url)
+    # test_pattern(symbol=symbol, start_date="2023-01-01")
 
-    VALID_USER_ID = os.getenv("MRZAIZAI2K_ID", "123456")  # Set to actual MRZAIZAI2K_ID
-    INVALID_USER_ID = "999999"
+    # VALID_USER_ID = os.getenv("MRZAIZAI2K_ID", "123456")  # Set to actual MRZAIZAI2K_ID
+    # INVALID_USER_ID = "999999"
 
     # test_remote()
     # test_log()
     # test_scrape()
     # test_masterquest()
     # test_update_vectordb()
+
+    test_get_tasks(num_tasks=5, get_completed=False)
+    test_create_task()
 
     print("\nAll tests completed.")

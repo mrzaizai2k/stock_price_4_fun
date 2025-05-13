@@ -322,9 +322,9 @@ class MicrosoftToDo:
                     list_name: str = None,
                     list_id: str = None,
                     importance:bool = False,
-                    dueDateTime: datetime = None,
+                    dueDateTime: str = None,
                     body=None,
-                    reminder_datetime: datetime = None,
+                    reminder_datetime: str = None,
                     ):
         assert (list_name is not None) or (
             list_id is not None
@@ -345,6 +345,7 @@ class MicrosoftToDo:
 
             if reminder_datetime is None:
                 reminder_datetime = dueDateTime
+                
         
         importance = 'high' if importance else 'normal'
 
