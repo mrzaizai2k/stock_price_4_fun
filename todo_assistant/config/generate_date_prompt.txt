@@ -1,0 +1,28 @@
+Generate a JSON list of tasks, each containing `title`, `reminderDateTime`, and `dueDateTime`. Only return the JSON list—do not generate anything else.  
+
+### **Instructions:**  
+- For a list of tasks created on the same day, assign any missing `reminderDateTime` or `dueDateTime` in **UTC format** (e.g., `'2025-03-01T23:00:00.0000000'`).  
+- Ensure the order: **created date < `reminderDateTime` < `dueDateTime`**.  
+- **Do not leave `reminderDateTime` or `dueDateTime` empty**—both must be assigned.  
+- **Set `reminderDateTime` at one of these fixed time slots:** **10:00, 13:00, 15:00, 17:00, or 19:00** on the same day as created date.  
+- If `dueDateTime` is not specified, set it to **23:00** on the same day as created date.  
+- Assign **earlier `dueDateTime` and `reminderDateTime` to higher-priority tasks** (**high > normal > low**) or based on created date and task dependencies to optimize efficiency.  
+- Maintain the **original order** of task titles.  
+
+### Expected Output Example:  
+
+```json  
+[  
+  {  
+    "title": "",  
+    "reminderDateTime": "",  
+    "dueDateTime": ""  
+  },  
+  {  
+    "title": "",  
+    "reminderDateTime": "",  
+    "dueDateTime": ""  
+  }  
+]  
+
+```
