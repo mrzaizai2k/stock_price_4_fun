@@ -173,11 +173,13 @@ def test_create_task():
     # Create a unique task name with timestamp to avoid duplicates
     task_name = f"Test Task {datetime.now().strftime('%Y%m%d%H%M%S')}"
     payload = {
-        "task_name": task_name,
+        "body": {
+            "content": "Initialize project with Create React App or Vite, configure TypeScript, set up folder structure for components, services, hooks, and utilities"
+        },
+        "task_name": "Set up React project structure with TypeScript",
         "importance": True,
-        "due_date_time": "2025-05-14:14:00:00",
-        "body": {"content": "Test task description", "contentType": "text"}
-    }
+        "due_date_time": "2025-05-14T23:59:59Z"
+        }
     print("\nCreate Task Test Payload:")
     print(payload)
     try:

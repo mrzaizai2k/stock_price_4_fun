@@ -139,7 +139,7 @@ async def tavily_search(request: TavilySearchRequest):
     operation_id="get_tasks",
 )
 async def get_tasks(
-    num_tasks: int = 100,
+    num_tasks: int = 10,
     get_completed: bool = False,
     todo: MicrosoftToDo = Depends(get_todo_client)
 ):
@@ -147,7 +147,7 @@ async def get_tasks(
     try:
         tasks = todo.get_tasks(
             list_name="Tasks",
-            num_tasks=num_tasks,
+            num_tasks=5,
             get_completed=get_completed
         )
         logger.debug(f"Retrieved {len(tasks)} tasks from 'Tasks' list")
@@ -170,7 +170,9 @@ async def create_task(
     request: CreateTaskRequest,
     todo: MicrosoftToDo = Depends(get_todo_client)
 ):
-    """Create a new task in the 'Tasks' list in Microsoft ToDo."""
+    """Create a new task in the 'Tasks' list in Microsoft To Do.
+    Date time Format: YYYY-MM-DD:HH:MM:SS (string)
+    """
     try:
 
         # Create the task
