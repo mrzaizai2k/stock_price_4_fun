@@ -272,3 +272,4 @@ xlrd==2.0.1
 yarl==1.9.3
 yaspin==3.0.1
 zstandard==0.23.0
+tavily-python

@@ -71,3 +71,4 @@ urllib3==2.1.0
 vnstock==0.2.8.6
 wcwidth==0.2.12
 wsproto==1.2.0
+tavily-python

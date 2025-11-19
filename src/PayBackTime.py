@@ -200,18 +200,31 @@ def pbt_pre_filter():
 def find_PBT_stocks(file_path="memory/paybacktime.csv"):
     pbt_stocks = pbt_pre_filter()
     pass_ticker = []
+
     for stock in pbt_stocks:
-        pbt_generator = PayBackTime(symbol=stock, report_range='yearly', window_size=10)
-        # pbt_generator.calculate_price()
-        pbt_years = pbt_generator.calculate_payback_time()
-        if pbt_years is not None and pbt_years <= 5:
-            pass_ticker.append(pbt_generator.symbol)
+        try:
+            pbt_generator = PayBackTime(
+                symbol=stock,
+                report_range='yearly',
+                window_size=10
+            )
+
+            pbt_years = pbt_generator.calculate_payback_time()
+
+            if pbt_years is not None and pbt_years <= 5:
+                pass_ticker.append(pbt_generator.symbol)
+
+        except Exception as e:
+            print(f"[ERROR] Failed processing {stock}: {e}")
+
     print(f"PBT stocks: {pass_ticker}")
     return pass_ticker
+
 
 def main():
     pbt_generator = PayBackTime(symbol='ACB', report_range='yearly', window_size=10)
     pbt_generator.get_report()
+    find_PBT_stocks(file_path="memory/paybacktime.csv")
 
 if __name__ =="__main__":
     main()
